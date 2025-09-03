@@ -15,10 +15,13 @@ export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: strin
 
   useEffect(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return setFiltered(products || [])
-    if (!products) return setFiltered([])
-    setFiltered(products.filter((p: Product) => (p.title + ' ' + p.description + ' ' + p.tags.join(' ')).toLowerCase().includes(q)))
-  }, [query, products])
+    // Filter out user's own products from marketplace
+    const otherUsersProducts = products?.filter((p: Product) => p.sellerId !== user?.id) || []
+    
+    if (!q) return setFiltered(otherUsersProducts)
+    if (!otherUsersProducts.length) return setFiltered([])
+    setFiltered(otherUsersProducts.filter((p: Product) => (p.title + ' ' + p.description + ' ' + p.tags.join(' ')).toLowerCase().includes(q)))
+  }, [query, products, user?.id])
 
   // Removed dummy product creation that was interfering with real data
 

@@ -4,7 +4,7 @@ import { useMarketplace } from '../../state/MarketplaceContext'
 import { Product } from '../../types'
 import GlassCard from '../ui/GlassCard'
 
-export default function Profile({ onOpenChat, onBack }: { onOpenChat: (c: string) => void; onBack: () => void }) {
+export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenChat: (c: string) => void; onBack: () => void; onViewProduct: (productId: string) => void }) {
   const { user, updateUser, setUser, products, chats, favorites } = useMarketplace()
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<'listings' | 'favorites'>('listings')
@@ -128,7 +128,7 @@ export default function Profile({ onOpenChat, onBack }: { onOpenChat: (c: string
                 ? myListings.length === 0
                   ? (<div className="col-span-full p-6 text-center opacity-80">You have no listings yet</div>)
                   : myListings.map((p) => (
-                      <div key={p.id} className="p-3 bg-white/3 rounded-md">
+                      <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
                         <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
                         <div className="font-semibold">{p.title}</div>
                         <div className="text-xs opacity-70">₹{p.price}</div>
@@ -138,7 +138,7 @@ export default function Profile({ onOpenChat, onBack }: { onOpenChat: (c: string
                 : favoriteProducts.length === 0
                   ? (<div className="col-span-full p-6 text-center opacity-80">You have no favorites yet</div>)
                   : favoriteProducts.map((p) => (
-                      <div key={p.id} className="p-3 bg-white/3 rounded-md">
+                      <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
                         <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
                         <div className="font-semibold">{p.title}</div>
                         <div className="text-xs opacity-70">₹{p.price}</div>

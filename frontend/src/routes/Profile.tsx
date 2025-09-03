@@ -20,6 +20,7 @@ export default function ProfileRoute() {
   const handleBack = () => navigate('/marketplace')
   const handleOpenChat = (chatId: string) => setActiveChat(chatId)
   const closeChat = () => setActiveChat(null)
+  const handleViewProduct = (productId: string) => navigate(`/product/${productId}`)
 
   if (!isHydrated || !user) {
     return (
@@ -35,7 +36,7 @@ export default function ProfileRoute() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-        <Profile onOpenChat={handleOpenChat} onBack={handleBack} />
+        <Profile onOpenChat={handleOpenChat} onBack={handleBack} onViewProduct={handleViewProduct} />
       </motion.div>
       <AnimatePresence>{activeChat && <ChatPage chatId={activeChat} onClose={closeChat} />}</AnimatePresence>
     </div>
