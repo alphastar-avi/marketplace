@@ -44,3 +44,12 @@ export const favoritesAPI = {
   remove: (productId: string, userId: string) => 
     api.delete(`/favorites/${productId}?user_id=${userId}`),
 }
+
+// Auth API
+export const authAPI = {
+  login: (credentials: { email: string; password: string }) => 
+    api.post('/auth/login', credentials),
+  register: (userData: { name: string; email: string; password: string; year?: string; department?: string }) => 
+    api.post('/auth/register', userData),
+  getMe: () => api.get('/auth/me'),
+}

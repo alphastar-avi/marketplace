@@ -3,9 +3,11 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"marketplace-backend/models"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -14,13 +16,23 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	// Azure PostgreSQL connection string with correct credentials
-	host := "marketplace-test.postgres.database.azure.com"
-	user := "myadmin"
-	password := "MyStrongPassword123!"
-	dbname := "postgres"
-	port := "5432"
-	sslmode := "require"
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using environment variables or defaults")
+	}
+
+	// Get database configuration from environment variables (no fallbacks)
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT")
+	sslmode := os.Getenv("DB_SSLMODE")
+
+	// Check if all required environment variables are set
+	if host == "" || user == "" || password == "" || dbname == "" || port == "" || sslmode == "" {
+		log.Fatal("Database connection error: Missing required environment variables (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, DB_SSLMODE)")
+	}
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		host, user, password, dbname, port, sslmode)
@@ -44,10 +56,10 @@ func ConnectDatabase() {
 
 	log.Println("Database connected successfully!")
 
-	// Drop and recreate tables to fix array type issues and foreign key constraints
-	DB.Migrator().DropTable(&models.Product{}, &models.Chat{}, &models.Message{}, &models.PurchaseRequest{}, &models.Favorite{})
-	// Also drop the many-to-many junction table
-	DB.Migrator().DropTable("chat_participants")
+	// REMOVED: Drop and recreate tables - this was causing data loss on every server restart
+	// Only uncomment these lines if you need to reset the database schema during development
+	// DB.Migrator().DropTable(&models.Product{}, &models.Chat{}, &models.Message{}, &models.PurchaseRequest{}, &models.Favorite{})
+	// DB.Migrator().DropTable("chat_participants")
 	
 	// Auto-migrate the schema
 	err = DB.AutoMigrate(
@@ -172,3 +184,4 @@ func seedDefaultProducts() {
 		log.Printf("Successfully seeded %d default products!", len(defaultProducts))
 	}
 }
+

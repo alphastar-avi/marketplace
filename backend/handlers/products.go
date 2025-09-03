@@ -57,21 +57,29 @@ func GetProduct(c *gin.Context) {
 
 // CreateProduct creates a new product
 func CreateProduct(c *gin.Context) {
+	// Get authenticated user ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
 	var req CreateProductRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	sellerID, err := uuid.Parse(req.SellerID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid seller ID"})
-		return
-	}
-
 	// Convert arrays to JSON strings
 	imagesJSON, _ := json.Marshal(req.Images)
 	tagsJSON, _ := json.Marshal(req.Tags)
+
+	// Get user's college
+	var user models.User
+	if err := config.DB.Preload("College").First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+		return
+	}
 
 	product := models.Product{
 		Title:       req.Title,
@@ -82,13 +90,9 @@ func CreateProduct(c *gin.Context) {
 		Category:    req.Category,
 		Tags:        string(tagsJSON),
 		Status:      "available",
-		SellerID:    sellerID,
+		SellerID:    user.ID,
+		CollegeID:   user.CollegeID,
 	}
-
-	// Set default college for now (later get from user context)
-	var defaultCollege models.College
-	config.DB.First(&defaultCollege)
-	product.CollegeID = defaultCollege.ID
 
 	result := config.DB.Create(&product)
 	if result.Error != nil {
@@ -105,6 +109,13 @@ func CreateProduct(c *gin.Context) {
 
 // UpdateProduct updates an existing product
 func UpdateProduct(c *gin.Context) {
+	// Get authenticated user ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
 	id := c.Param("id")
 	productID, err := uuid.Parse(id)
 	if err != nil {
@@ -116,6 +127,12 @@ func UpdateProduct(c *gin.Context) {
 	result := config.DB.First(&product, productID)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	// Check if user owns this product
+	if product.SellerID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own products"})
 		return
 	}
 
@@ -140,6 +157,13 @@ func UpdateProduct(c *gin.Context) {
 
 // DeleteProduct deletes a product
 func DeleteProduct(c *gin.Context) {
+	// Get authenticated user ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
 	id := c.Param("id")
 	productID, err := uuid.Parse(id)
 	if err != nil {
@@ -147,14 +171,22 @@ func DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	result := config.DB.Delete(&models.Product{}, productID)
+	var product models.Product
+	result := config.DB.First(&product, productID)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+	// Check if user owns this product
+	if product.SellerID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own products"})
+		return
+	}
+
+	result = config.DB.Delete(&product)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
 		return
 	}
 

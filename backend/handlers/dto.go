@@ -30,7 +30,6 @@ type CreateProductRequest struct {
 	Condition   string   `json:"condition" binding:"required"`
 	Category    string   `json:"category" binding:"required"`
 	Tags        []string `json:"tags"`
-	SellerID    string   `json:"sellerId" binding:"required"`
 }
 
 // ToModel converts ProductDTO to database model

@@ -8,7 +8,7 @@ import FloatingActions from './FloatingActions'
 import { Product } from '../../types'
 
 export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: string) => void }) {
-  const { products, setProducts, favorites, toggleFavorite, user } = useMarketplace()
+  const { products, setProducts, favorites, toggleFavorite, user, deleteProduct } = useMarketplace()
   const [query, setQuery] = useState('')
   const [filtered, setFiltered] = useState<Product[]>(products || [])
   const isAdmin = Boolean(user?.isAdmin)
@@ -20,28 +20,10 @@ export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: strin
     setFiltered(products.filter((p: Product) => (p.title + ' ' + p.description + ' ' + p.tags.join(' ')).toLowerCase().includes(q)))
   }, [query, products])
 
-  useEffect(() => {
-    if (!products || products.length === 0) {
-      const sample: Product[] = Array.from({ length: 6 }).map((_, i) => ({
-        id: `p_${Math.random().toString(36).slice(2, 9)}`,
-        title: ['Calculus Book', 'Mechanical Kit', 'Laptop Sleeve', 'Graphing Calculator', 'USB Microphone', 'Data Structures Book'][i % 6],
-        price: [150, 450, 299, 900, 1200, 200][i % 6],
-        description: 'A well-maintained item perfect for students.',
-        images: [placeholderImage(i)],
-        condition: i % 2 === 0 ? 'Like New' : 'Good',
-        category: ['Books', 'Electronics', 'Accessories'][i % 3],
-        tags: ['campus', 'student'],
-        sellerId: 'seller_1',
-        postedAt: nowIso(),
-        status: 'available',
-      }))
-      setProducts(sample)
-    }
-  }, [products?.length, setProducts])
+  // Removed dummy product creation that was interfering with real data
 
-  const handleDeleteProduct = (id: string) => {
-    if (!products) return
-    setProducts(products.filter((p) => p.id !== id))
+  const handleDeleteProduct = async (id: string) => {
+    await deleteProduct(id)
   }
 
   return (
@@ -60,10 +42,11 @@ export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: strin
               <ProductCard
                 key={p.id}
                 product={p}
+                onProductClick={() => navigate(`/product/${p.id}`)}
                 isFavorited={favorites.includes(p.id)}
                 onToggleFavorite={() => toggleFavorite(p.id)}
                 isAdmin={isAdmin}
-                onDeleteProduct={() => handleDeleteProduct(p.id)}
+                onDeleteProduct={user && p.sellerId === user.id ? () => handleDeleteProduct(p.id) : undefined}
               />
             ))
           )}

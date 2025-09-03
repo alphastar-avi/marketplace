@@ -33,9 +33,9 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
       style={{ border: '1px solid rgb(50, 56, 68)' }}
       onClick={handleProductClick}
     >
-      {isAdmin && (
+      {onDeleteProduct && (
         <button
-          onClick={(e) => { e.stopPropagation(); onDeleteProduct && onDeleteProduct(); }}
+          onClick={(e) => { e.stopPropagation(); onDeleteProduct(); }}
           className="absolute top-2 left-2 z-10 p-1.5 bg-red-500/80 hover:bg-red-600 text-white rounded-full shadow-lg"
           title="Delete product"
         >

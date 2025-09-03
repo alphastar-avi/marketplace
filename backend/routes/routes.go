@@ -2,6 +2,7 @@ package routes
 
 import (
 	"marketplace-backend/handlers"
+	"marketplace-backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,14 +11,22 @@ func SetupRoutes(r *gin.Engine) {
 	// API group
 	api := r.Group("/api")
 	{
+		// Auth routes (public)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", handlers.Register)
+			auth.POST("/login", handlers.Login)
+			auth.GET("/me", middleware.AuthMiddleware(), handlers.GetMe)
+		}
+
 		// Products routes
 		products := api.Group("/products")
 		{
-			products.GET("", handlers.GetProducts)
-			products.POST("", handlers.CreateProduct)
-			products.GET("/:id", handlers.GetProduct)
-			products.PUT("/:id", handlers.UpdateProduct)
-			products.DELETE("/:id", handlers.DeleteProduct)
+			products.GET("", middleware.OptionalAuthMiddleware(), handlers.GetProducts)
+			products.POST("", middleware.AuthMiddleware(), handlers.CreateProduct)
+			products.GET("/:id", middleware.OptionalAuthMiddleware(), handlers.GetProduct)
+			products.PUT("/:id", middleware.AuthMiddleware(), handlers.UpdateProduct)
+			products.DELETE("/:id", middleware.AuthMiddleware(), handlers.DeleteProduct)
 		}
 
 		// Users routes
@@ -25,7 +34,7 @@ func SetupRoutes(r *gin.Engine) {
 		{
 			users.GET("/:id", handlers.GetUser)
 			users.POST("", handlers.CreateUser)
-			users.PUT("/:id", handlers.UpdateUser)
+			users.PUT("/:id", middleware.AuthMiddleware(), handlers.UpdateUser)
 		}
 
 		// Chats routes

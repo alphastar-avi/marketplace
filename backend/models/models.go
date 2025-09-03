@@ -21,6 +21,7 @@ type User struct {
 	ID         uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	Name       string    `json:"name" gorm:"not null"`
 	Email      string    `json:"email" gorm:"unique"`
+	Password   string    `json:"-"` // Hidden from JSON responses
 	Avatar     string    `json:"avatar"`
 	Year       string    `json:"year"`
 	Department string    `json:"department"`

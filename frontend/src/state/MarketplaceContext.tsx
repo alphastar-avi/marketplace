@@ -3,13 +3,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { Product, UserType, Chat, PurchaseRequest } from '../types'
 import { uid, nowIso, arraysEq, STORAGE_KEYS } from '../utils'
-import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI } from '../api/services'
+import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI } from '../api/services'
 
 type MarketplaceContextType = {
   products: Product[]
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
   addProduct: (p: Omit<Product, 'id' | 'postedAt'>) => Promise<Product>
   updateProductStatus: (productId: string, status: Product['status']) => Promise<void>
+  deleteProduct: (productId: string) => Promise<void>
   user: UserType | null
   updateUser: (u: Partial<UserType>) => Promise<void>
   setUser: React.Dispatch<React.SetStateAction<UserType | null>>
@@ -73,21 +74,26 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         const requestsResponse = await purchaseRequestsAPI.getAll()
         setPurchaseRequests(requestsResponse.data)
 
-        // Load user from localStorage (temporary until auth is implemented)
-        const savedUser = localStorage.getItem(STORAGE_KEYS.USER)
-        if (savedUser) {
-          const userData = JSON.parse(savedUser)
-          setUser(userData)
-          
-          // Only load favorites if user has a valid UUID
-          if (userData.id && userData.id.includes('-')) {
-            try {
-              const favoritesResponse = await favoritesAPI.getByUser(userData.id)
-              const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
-              setFavorites(userFavorites)
-            } catch (error) {
-              console.error('Failed to load favorites:', error)
-            }
+        // Check for authenticated user
+        const token = localStorage.getItem('auth_token')
+        const savedUser = localStorage.getItem('user')
+        
+        if (token && savedUser) {
+          try {
+            // Verify token is still valid by fetching current user
+            const userResponse = await authAPI.getMe()
+            const userData = userResponse.data
+            setUser(userData)
+            
+            // Load user's favorites
+            const favoritesResponse = await favoritesAPI.getByUser(userData.id)
+            const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
+            setFavorites(userFavorites)
+          } catch (error) {
+            // Token invalid, clear auth data
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('user')
+            console.error('Auth token invalid:', error)
           }
         }
 
@@ -241,6 +247,23 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const deleteProduct = async (productId: string) => {
+    try {
+      console.log('Attempting to delete product:', productId)
+      const response = await productsAPI.delete(productId)
+      console.log('Delete response:', response)
+      setProducts((s) => s.filter((p) => p.id !== productId))
+      console.log('Product deleted successfully from local state')
+    } catch (error) {
+      console.error('Failed to delete product:', error)
+      if (error.response) {
+        console.error('Error response:', error.response.data)
+        console.error('Error status:', error.response.status)
+      }
+      alert('❌ Failed to delete product. Please try again.')
+    }
+  }
+
   const updatePurchaseRequest = async (requestId: string, status: 'accepted' | 'declined') => {
     try {
       const response = await purchaseRequestsAPI.updateStatus(requestId, status)
@@ -268,6 +291,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         setProducts,
         addProduct,
         updateProductStatus,
+        deleteProduct,
         user,
         updateUser,
         setUser,
