@@ -27,6 +27,12 @@ func GetProducts(c *gin.Context) {
 		productDTOs = append(productDTOs, *ProductDTOFromModel(&product))
 	}
 
+	// Return empty array instead of null if no products
+	if len(productDTOs) == 0 {
+		c.JSON(http.StatusOK, []ProductDTO{})
+		return
+	}
+
 	c.JSON(http.StatusOK, productDTOs)
 }
 

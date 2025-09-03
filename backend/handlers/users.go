@@ -38,12 +38,25 @@ func CreateUser(c *gin.Context) {
 
 	// Set default college for now
 	var defaultCollege models.College
-	config.DB.First(&defaultCollege)
+	result := config.DB.First(&defaultCollege)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Default college not found"})
+		return
+	}
 	user.CollegeID = defaultCollege.ID
 
-	result := config.DB.Create(&user)
+	// Check if user with email already exists
+	var existingUser models.User
+	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+		// User exists, return the existing user
+		config.DB.Preload("College").First(&existingUser, existingUser.ID)
+		c.JSON(http.StatusOK, existingUser)
+		return
+	}
+
+	result = config.DB.Create(&user)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "details": result.Error.Error()})
 		return
 	}
 

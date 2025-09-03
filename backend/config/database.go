@@ -44,8 +44,10 @@ func ConnectDatabase() {
 
 	log.Println("Database connected successfully!")
 
-	// Drop and recreate tables to fix array type issues
+	// Drop and recreate tables to fix array type issues and foreign key constraints
 	DB.Migrator().DropTable(&models.Product{}, &models.Chat{}, &models.Message{}, &models.PurchaseRequest{}, &models.Favorite{})
+	// Also drop the many-to-many junction table
+	DB.Migrator().DropTable("chat_participants")
 	
 	// Auto-migrate the schema
 	err = DB.AutoMigrate(
@@ -66,6 +68,9 @@ func ConnectDatabase() {
 
 	// Seed default college if none exists
 	seedDefaultCollege()
+	
+	// Seed default products if none exist
+	seedDefaultProducts()
 }
 
 func seedDefaultCollege() {
@@ -83,5 +88,87 @@ func seedDefaultCollege() {
 		} else {
 			log.Println("Default college created successfully!")
 		}
+	}
+}
+
+func seedDefaultProducts() {
+	var count int64
+	DB.Model(&models.Product{}).Count(&count)
+	
+	if count == 0 {
+		// Get the default college ID
+		var defaultCollege models.College
+		if err := DB.Where("domain = ?", "default.edu").First(&defaultCollege).Error; err != nil {
+			log.Printf("Failed to find default college for seeding products: %v", err)
+			return
+		}
+
+		// Get or create a default user as seller
+		var defaultUser models.User
+		err := DB.Where("email = ?", "john.doe@default.edu").First(&defaultUser).Error
+		if err != nil {
+			// User doesn't exist, create it
+			defaultUser = models.User{
+				Name:       "John Doe",
+				Email:      "john.doe@default.edu",
+				Avatar:     "",
+				Year:       "Senior",
+				Department: "Computer Science",
+				CollegeID:  defaultCollege.ID,
+			}
+			
+			if err := DB.Create(&defaultUser).Error; err != nil {
+				log.Printf("Failed to create default user: %v", err)
+				return
+			}
+			log.Println("Default user created successfully!")
+		}
+
+		defaultProducts := []models.Product{
+			{
+				Title:       "MacBook Pro 13-inch",
+				Price:       800.00,
+				Description: "Lightly used MacBook Pro 13-inch from 2021. Perfect for students. Includes charger and original box.",
+				Images:      `["https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500"]`,
+				Condition:   "Like New",
+				Category:    "Electronics",
+				Tags:        `["laptop", "apple", "macbook", "computer"]`,
+				Status:      "available",
+				SellerID:    defaultUser.ID,
+				CollegeID:   defaultCollege.ID,
+			},
+			{
+				Title:       "Calculus Textbook - Stewart 8th Edition",
+				Price:       45.00,
+				Description: "Essential calculus textbook in excellent condition. No highlighting or writing inside. Perfect for MATH 101/102.",
+				Images:      `["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500"]`,
+				Condition:   "Good",
+				Category:    "Books",
+				Tags:        `["textbook", "calculus", "math", "stewart"]`,
+				Status:      "available",
+				SellerID:    defaultUser.ID,
+				CollegeID:   defaultCollege.ID,
+			},
+			{
+				Title:       "Dorm Room Mini Fridge",
+				Price:       120.00,
+				Description: "Compact mini fridge perfect for dorm rooms. Energy efficient and quiet. Moving out sale!",
+				Images:      `["https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=500"]`,
+				Condition:   "Good",
+				Category:    "Appliances",
+				Tags:        `["fridge", "dorm", "appliance", "mini"]`,
+				Status:      "available",
+				SellerID:    defaultUser.ID,
+				CollegeID:   defaultCollege.ID,
+			},
+		}
+
+		for _, product := range defaultProducts {
+			if err := DB.Create(&product).Error; err != nil {
+				log.Printf("Failed to create default product %s: %v", product.Title, err)
+			}
+		}
+
+		log.Printf("Successfully seeded %d default products!", len(defaultProducts))
 	}
 }
