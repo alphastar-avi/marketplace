@@ -5,7 +5,7 @@ import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite } = useMarketplace()
+  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -29,10 +29,14 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
     setTimeout(() => setShowRequestSent(false), 3000)
   }
 
-  const handleRemoveListing = () => {
+  const handleRemoveListing = async () => {
     if (confirm('Are you sure you want to remove this listing?')) {
-      setProducts((prev) => prev.filter((p) => p.id !== prod.id))
-      onBack()
+      try {
+        await deleteProduct(prod.id)
+        onBack()
+      } catch (error) {
+        console.error('Failed to delete product:', error)
+      }
     }
   }
 
