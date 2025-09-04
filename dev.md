@@ -152,16 +152,115 @@ backend/
 3. **Test API endpoints** after changes to verify functionality
 4. **Use environment variables** for configuration
 
+### 6. Product Deletion Issue - Items Reappearing After Refresh
+**Problem:** Products would reappear in marketplace after deletion and page refresh.
+
+**Root Causes Identified:**
+1. Frontend was creating dummy/sample products when products array was empty
+2. Delete button only showed for admin users instead of product owners
+3. Frontend delete function wasn't calling backend API properly
+
+**Solutions Applied:**
+```javascript
+// 1. Removed dummy product creation that interfered with real data
+// useEffect(() => {
+//   if (!products || products.length === 0) {
+//     const sample: Product[] = Array.from({ length: 6 }).map(...)
+//     setProducts(sample)  // This was causing products to reappear
+//   }
+// }, [products?.length, setProducts])
+
+// 2. Fixed delete button visibility - show for product owners
+onDeleteProduct={user && p.sellerId === user.id ? () => handleDeleteProduct(p.id) : undefined}
+
+// 3. Updated delete function to call backend API
+const deleteProduct = async (productId: string) => {
+  try {
+    await productsAPI.delete(productId)
+    setProducts((s) => s.filter((p) => p.id !== productId))
+  } catch (error) {
+    console.error('Failed to delete product:', error)
+  }
+}
+```
+
+### 7. Authentication & Authorization Implementation
+**Added Features:**
+- JWT-based authentication system
+- User registration and login endpoints
+- Protected routes with middleware
+- Ownership validation for product operations
+
+**Backend Auth Structure:**
+```go
+// middleware/auth.go - JWT validation middleware
+// handlers/auth.go - Login, register, get user endpoints
+// Ownership checks in product delete: product.SellerID != userID
+```
+
+### 8. Profile "My Listings" Separation
+**Problem:** Users could see their own products in marketplace, causing confusion.
+
+**Solution:** Implemented proper separation:
+- **Profile → My Listings:** Shows only user's own products
+- **Explore Marketplace:** Shows only other users' products (filtered out own)
+- **Clickable navigation:** Product cards navigate to detail pages
+- **Consistent delete functionality:** Both profile and marketplace use same backend API
+
+```javascript
+// Filter out user's own products from marketplace
+const otherUsersProducts = products?.filter((p: Product) => p.sellerId !== user?.id) || []
+```
+
+## Architecture & Structure
+
+### Backend Structure
+```
+backend/
+├── main.go              # Entry point, server setup
+├── config/
+│   └── database.go      # DB connection, migration, seeding
+├── models/
+│   └── models.go        # GORM models (College, User, Product, Chat, etc.)
+├── handlers/
+│   ├── auth.go          # Authentication (login, register, JWT)
+│   ├── products.go      # Product CRUD operations
+│   ├── chats.go         # Chat functionality
+│   ├── favorites.go     # Favorites management
+│   ├── purchase_requests.go # Purchase request handling
+│   └── dto.go           # Data Transfer Objects
+├── middleware/
+│   └── auth.go          # JWT authentication middleware
+└── routes/
+    └── routes.go        # Route definitions with auth protection
+```
+
+### Frontend Structure
+```
+frontend/src/
+├── components/
+│   ├── marketplace/     # Product browsing (others' products only)
+│   ├── profile/         # User profile with "My Listings"
+│   ├── product/         # Product detail pages
+│   └── auth/           # Login/signup components
+├── routes/             # Page routing
+├── state/              # Context for global state management
+└── api/               # Backend API integration
+```
+
 ## Current Status
-- ✅ Backend running on port 8080
+- ✅ Backend running on port 8080 with JWT authentication
 - ✅ Database connected to Azure PostgreSQL
-- ✅ 3 default products seeded
-- ✅ All API endpoints functional
+- ✅ User registration and login system
+- ✅ Product CRUD with ownership validation
+- ✅ Delete functionality working properly (permanent database deletion)
+- ✅ Profile "My Listings" separated from marketplace
+- ✅ Frontend-backend integration complete
 - ✅ CORS configured for frontend integration
 
 ## Next Steps
-- Frontend integration testing
-- User authentication implementation
-- Image upload functionality
 - Real-time chat features
-- Search and filtering capabilities
+- Image upload functionality for products
+- Search and filtering enhancements
+- Purchase request workflow improvements
+- Email notifications for transactions

@@ -37,6 +37,8 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
     if (confirm('Are you sure you want to logout?')) {
       setUser(null)
       localStorage.removeItem('cm_user_v1')
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
       localStorage.removeItem('google_access_token')
       localStorage.removeItem('google_refresh_token')
       localStorage.removeItem('google_user_info')
