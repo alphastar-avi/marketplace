@@ -8,6 +8,7 @@ import MarketplaceRoute from './routes/Marketplace'
 import ProductRoute from './routes/Product'
 import ProfileRoute from './routes/Profile'
 import ListItemRoute from './routes/ListItem'
+import ChatsRoute from './routes/Chats'
 import AuthCallback from './routes/AuthCallback'
 import Login from './routes/Login'
 import Signup from './routes/Signup'
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
   { path: '/product/:id', element: <ProductRoute /> },
   { path: '/profile', element: <ProfileRoute /> },
   { path: '/list-item', element: <ListItemRoute /> },
+  { path: '/chats', element: <ChatsRoute /> },
   { path: '/auth/callback', element: <AuthCallback /> },
 ])
 
