@@ -109,10 +109,16 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
               <div className="space-y-3">
                 <div className="font-semibold">Seller</div>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 bg-white/10 rounded-full grid place-items-center">S</div>
+                  <div className="h-12 w-12 bg-white/10 rounded-full grid place-items-center">
+                    {prod.seller?.avatar ? (
+                      <img src={prod.seller.avatar} alt={prod.seller.name} className="h-12 w-12 rounded-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-semibold">{prod.seller?.name?.charAt(0) || 'S'}</span>
+                    )}
+                  </div>
                   <div>
-                    <div className="font-semibold">Seller Name</div>
-                    <div className="text-xs opacity-70">3rd Year • CSE</div>
+                    <div className="font-semibold">{prod.seller?.name || 'Unknown Seller'}</div>
+                    <div className="text-xs opacity-70">{prod.seller?.year || 'N/A'} • {prod.seller?.department || 'N/A'}</div>
                   </div>
                 </div>
                 <div className="text-sm opacity-80">Posted: {new Date(prod.postedAt).toLocaleString()}</div>

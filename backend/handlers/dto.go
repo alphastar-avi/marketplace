@@ -19,6 +19,17 @@ type ProductDTO struct {
 	Status      string   `json:"status"`
 	SellerID    string   `json:"sellerId"`
 	PostedAt    string   `json:"postedAt"`
+	Seller      *SellerDTO `json:"seller,omitempty"`
+}
+
+// SellerDTO for seller information in product responses
+type SellerDTO struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Email      string `json:"email"`
+	Year       string `json:"year"`
+	Department string `json:"department"`
+	Avatar     string `json:"avatar"`
 }
 
 // CreateProductRequest for handling product creation
@@ -63,7 +74,7 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 	json.Unmarshal([]byte(product.Images), &images)
 	json.Unmarshal([]byte(product.Tags), &tags)
 	
-	return &ProductDTO{
+	dto := &ProductDTO{
 		ID:          product.ID.String(),
 		Title:       product.Title,
 		Price:       product.Price,
@@ -76,4 +87,18 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 		SellerID:    product.SellerID.String(),
 		PostedAt:    product.CreatedAt.Format("2006-01-02T15:04:05.000Z"),
 	}
+	
+	// Include seller information if available
+	if product.Seller.ID != uuid.Nil {
+		dto.Seller = &SellerDTO{
+			ID:         product.Seller.ID.String(),
+			Name:       product.Seller.Name,
+			Email:      product.Seller.Email,
+			Year:       product.Seller.Year,
+			Department: product.Seller.Department,
+			Avatar:     product.Seller.Avatar,
+		}
+	}
+	
+	return dto
 }

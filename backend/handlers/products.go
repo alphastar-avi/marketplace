@@ -52,7 +52,9 @@ func GetProduct(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, product)
+	// Convert to DTO to include seller information
+	responseDTO := ProductDTOFromModel(&product)
+	c.JSON(http.StatusOK, responseDTO)
 }
 
 // CreateProduct creates a new product

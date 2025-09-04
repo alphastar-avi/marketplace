@@ -10,6 +10,14 @@ export type Product = {
   sellerId: string
   postedAt: string
   status: 'available' | 'requested' | 'sold'
+  seller?: {
+    id: string
+    name: string
+    email: string
+    year: string
+    department: string
+    avatar: string
+  }
 }
 
 export type UserType = {
