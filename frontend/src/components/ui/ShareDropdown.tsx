@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Copy, Mail, MessageCircle } from 'lucide-react'
 
-export default function ShareDropdown({ productUrl, productTitle, isOpen, onClose, triggerRef }: { productUrl: string; productTitle: string; isOpen: boolean; onClose: () => void; triggerRef: React.RefObject<HTMLElement> }) {
+export default function ShareDropdown({ productUrl, productTitle, isOpen, onClose, triggerRef }: { productUrl: string; productTitle: string; isOpen: boolean; onClose: () => void; triggerRef: React.RefObject<HTMLElement | null> }) {
   const [copied, setCopied] = useState(false)
   const dropdownRef = useRef<HTMLDivElement | null>(null)
 

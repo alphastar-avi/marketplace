@@ -10,15 +10,15 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
-  const shareButtonRef = useRef<HTMLButtonElement | null>(null)
+  const shareButtonRef = useRef<HTMLButtonElement>(null)
 
   if (!prod) return <div className="p-8">Product not found</div>
 
   const isOwner = prod.sellerId === user?.id
   const isFavorited = favorites.includes(prod.id)
 
-  const startChat = () => {
-    const c = addChatIfMissing(prod.id, [user?.id || 'guest', prod.sellerId])
+  const startChat = async () => {
+    const c = await addChatIfMissing(prod.id, [user?.id || 'guest', prod.sellerId])
     onOpenChat(c.id)
   }
 
