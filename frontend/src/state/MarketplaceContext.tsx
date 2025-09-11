@@ -254,7 +254,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       console.log('Delete response:', response)
       setProducts((s) => s.filter((p) => p.id !== productId))
       console.log('Product deleted successfully from local state')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete product:', error)
       if (error.response) {
         console.error('Error response:', error.response.data)

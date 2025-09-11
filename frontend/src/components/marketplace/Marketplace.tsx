@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useMarketplace } from '../../state/MarketplaceContext'
 import { placeholderImage, nowIso } from '../../utils'
 import Header from './Header'
@@ -9,6 +10,7 @@ import { Product } from '../../types'
 
 export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: string) => void }) {
   const { products, setProducts, favorites, toggleFavorite, user, deleteProduct } = useMarketplace()
+  const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [filtered, setFiltered] = useState<Product[]>(products || [])
   const isAdmin = Boolean(user?.isAdmin)
@@ -45,7 +47,6 @@ export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: strin
               <ProductCard
                 key={p.id}
                 product={p}
-                onProductClick={() => navigate(`/product/${p.id}`)}
                 isFavorited={favorites.includes(p.id)}
                 onToggleFavorite={() => toggleFavorite(p.id)}
                 isAdmin={isAdmin}
