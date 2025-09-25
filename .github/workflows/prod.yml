@@ -107,7 +107,7 @@ jobs:
     - name: Build frontend with backend URL
       run: |
         cd frontend
-        echo "VITE_API_URL=${{ needs.deploy-backend.outputs.backend-url }}" > .env.production
+        echo "VITE_API_URL=${{ needs.deploy-backend.outputs.backend_url }}" > .env.production
         npm run build
         
     - name: Deploy to Azure Static Web Apps

@@ -110,6 +110,11 @@ resource "azurerm_container_app" "marketplace_backend" {
         name  = "GIN_MODE"
         value = "release"
       }
+
+      env {
+        name  = "DB_SSLMODE"
+        value = "require"
+      }
     }
 
     min_replicas = 0
