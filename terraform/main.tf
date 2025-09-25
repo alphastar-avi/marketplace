@@ -16,10 +16,9 @@ data "azurerm_resource_group" "marketplace" {
   name = "rg-marketplace-${var.environment}"
 }
 
-# Container Apps Environment
-resource "azurerm_container_app_environment" "marketplace" {
+# Container Apps Environment - Use existing one
+data "azurerm_container_app_environment" "marketplace" {
   name                = "cae-marketplace-${var.environment}"
-  location            = data.azurerm_resource_group.marketplace.location
   resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
@@ -65,7 +64,7 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
 # Container App
 resource "azurerm_container_app" "marketplace_backend" {
   name                         = "ca-marketplace-backend-${var.environment}"
-  container_app_environment_id = azurerm_container_app_environment.marketplace.id
+  container_app_environment_id = data.azurerm_container_app_environment.marketplace.id
   resource_group_name          = data.azurerm_resource_group.marketplace.name
   revision_mode                = "Single"
 
