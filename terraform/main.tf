@@ -28,20 +28,10 @@ resource "azurerm_container_app_environment" "marketplace" {
   resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
-# PostgreSQL Flexible Server
-resource "azurerm_postgresql_flexible_server" "marketplace" {
-  name                   = "psql-marketplace-${var.environment}-${random_string.suffix.result}"
-  resource_group_name    = data.azurerm_resource_group.marketplace.name
-  location               = data.azurerm_resource_group.marketplace.location
-  version                = "13"
-  administrator_login    = var.db_admin_username
-  administrator_password = var.db_admin_password
-  zone                   = "1"
-
-  storage_mb = 32768
-  sku_name   = "B_Standard_B1ms"
-
-  backup_retention_days = 7
+# PostgreSQL Flexible Server - Use existing one
+data "azurerm_postgresql_flexible_server" "marketplace" {
+  name                = "psql-marketplace-dev-garri"  # Use the latest existing one
+  resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
 # Random string for unique naming
@@ -54,7 +44,7 @@ resource "random_string" "suffix" {
 # PostgreSQL Database
 resource "azurerm_postgresql_flexible_server_database" "marketplace" {
   name      = var.db_name
-  server_id = azurerm_postgresql_flexible_server.marketplace.id
+  server_id = data.azurerm_postgresql_flexible_server.marketplace.id
   collation = "en_US.utf8"
   charset   = "utf8"
 }
@@ -62,7 +52,7 @@ resource "azurerm_postgresql_flexible_server_database" "marketplace" {
 # PostgreSQL Firewall Rule (Allow Azure Services)
 resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
   name             = "AllowAzureServices"
-  server_id        = azurerm_postgresql_flexible_server.marketplace.id
+  server_id        = data.azurerm_postgresql_flexible_server.marketplace.id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }

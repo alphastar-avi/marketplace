@@ -5,7 +5,7 @@ output "container_app_url" {
 
 output "database_host" {
   description = "PostgreSQL server hostname"
-  value       = azurerm_postgresql_flexible_server.marketplace.fqdn
+  value       = data.azurerm_postgresql_flexible_server.marketplace.fqdn
 }
 
 output "database_name" {
@@ -25,5 +25,5 @@ output "container_app_name" {
 
 output "postgresql_server_name" {
   description = "Name of the PostgreSQL server"
-  value       = azurerm_postgresql_flexible_server.marketplace.name
+  value       = data.azurerm_postgresql_flexible_server.marketplace.name
 }

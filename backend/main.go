@@ -18,7 +18,11 @@ func main() {
 
 	// Configure CORS
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Vite dev server
+		AllowOrigins:     []string{
+			"http://localhost:5173", 
+			"http://localhost:3000",
+			"https://green-mud-0476ecf00.1.azurestaticapps.net", // Azure Static Web App
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
