@@ -128,3 +128,4 @@ jobs:
         action: "upload"
         app_location: "./frontend"
         output_location: "dist"
+        skip_deploy_on_missing_secrets: true
