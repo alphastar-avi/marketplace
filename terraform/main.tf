@@ -41,16 +41,30 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-# PostgreSQL Database - Use existing one
-data "azurerm_postgresql_flexible_server_database" "marketplace" {
-  name      = var.db_name
-  server_id = data.azurerm_postgresql_flexible_server.marketplace.id
+# PostgreSQL Database - Import existing one
+import {
+  to = azurerm_postgresql_flexible_server_database.marketplace
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.DBforPostgreSQL/flexibleServers/psql-marketplace-dev-xgarri/databases/marketplace"
 }
 
-# PostgreSQL Firewall Rule - Use existing one
-data "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
-  name      = "AllowAzureServices"
+resource "azurerm_postgresql_flexible_server_database" "marketplace" {
+  name      = var.db_name
   server_id = data.azurerm_postgresql_flexible_server.marketplace.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}
+
+# PostgreSQL Firewall Rule - Import existing one
+import {
+  to = azurerm_postgresql_flexible_server_firewall_rule.azure_services
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.DBforPostgreSQL/flexibleServers/psql-marketplace-dev-xgarri/firewallRules/AllowAzureServices"
+}
+
+resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
+  name             = "AllowAzureServices"
+  server_id        = data.azurerm_postgresql_flexible_server.marketplace.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
 }
 
 # Container App - Import existing one
