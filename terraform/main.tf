@@ -41,20 +41,16 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-# PostgreSQL Database
-resource "azurerm_postgresql_flexible_server_database" "marketplace" {
+# PostgreSQL Database - Use existing one
+data "azurerm_postgresql_flexible_server_database" "marketplace" {
   name      = var.db_name
   server_id = data.azurerm_postgresql_flexible_server.marketplace.id
-  collation = "en_US.utf8"
-  charset   = "utf8"
 }
 
-# PostgreSQL Firewall Rule (Allow Azure Services)
-resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
-  name             = "AllowAzureServices"
-  server_id        = data.azurerm_postgresql_flexible_server.marketplace.id
-  start_ip_address = "0.0.0.0"
-  end_ip_address   = "0.0.0.0"
+# PostgreSQL Firewall Rule - Use existing one
+data "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
+  name      = "AllowAzureServices"
+  server_id = data.azurerm_postgresql_flexible_server.marketplace.id
 }
 
 # Container App - Import existing one

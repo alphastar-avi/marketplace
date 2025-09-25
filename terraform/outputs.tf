@@ -10,7 +10,7 @@ output "database_host" {
 
 output "database_name" {
   description = "PostgreSQL database name"
-  value       = azurerm_postgresql_flexible_server_database.marketplace.name
+  value       = data.azurerm_postgresql_flexible_server_database.marketplace.name
 }
 
 output "resource_group_name" {
