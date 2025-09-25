@@ -1,6 +1,6 @@
 output "container_app_url" {
   description = "URL of the deployed container app"
-  value       = "https://${azurerm_container_app.marketplace_backend.latest_revision_fqdn}"
+  value       = "https://${azurerm_container_app.marketplace_backend.ingress[0].fqdn}"
 }
 
 output "database_host" {
