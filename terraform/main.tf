@@ -11,22 +11,24 @@ provider "azurerm" {
   features {}
 }
 
-# Resource Group - Use existing one created during Static Web App setup
-data "azurerm_resource_group" "marketplace" {
-  name = "rg-marketplace-${var.environment}"
+# Resource Group
+resource "azurerm_resource_group" "marketplace" {
+  name     = "rg-marketplace-${var.environment}"
+  location = var.location
 }
 
-# Container Apps Environment - Use existing one
-data "azurerm_container_app_environment" "marketplace" {
+# Container Apps Environment
+resource "azurerm_container_app_environment" "marketplace" {
   name                = "cae-marketplace-${var.environment}"
-  resource_group_name = data.azurerm_resource_group.marketplace.name
+  location            = azurerm_resource_group.marketplace.location
+  resource_group_name = azurerm_resource_group.marketplace.name
 }
 
 # PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "marketplace" {
   name                   = "psql-marketplace-${var.environment}-${random_string.suffix.result}"
-  resource_group_name    = data.azurerm_resource_group.marketplace.name
-  location               = data.azurerm_resource_group.marketplace.location
+  resource_group_name    = azurerm_resource_group.marketplace.name
+  location               = azurerm_resource_group.marketplace.location
   version                = "13"
   administrator_login    = var.db_admin_username
   administrator_password = var.db_admin_password
@@ -64,8 +66,8 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
 # Container App
 resource "azurerm_container_app" "marketplace_backend" {
   name                         = "ca-marketplace-backend-${var.environment}"
-  container_app_environment_id = data.azurerm_container_app_environment.marketplace.id
-  resource_group_name          = data.azurerm_resource_group.marketplace.name
+  container_app_environment_id = azurerm_container_app_environment.marketplace.id
+  resource_group_name          = azurerm_resource_group.marketplace.name
   revision_mode                = "Single"
 
   template {
