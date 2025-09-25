@@ -2,6 +2,10 @@ import axios from 'axios'
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_URL || 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
 
+// Debug logging
+console.log('🔍 VITE_API_URL from env:', (import.meta as any).env.VITE_API_URL)
+console.log('🔍 Final API_BASE_URL:', API_BASE_URL)
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {

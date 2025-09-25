@@ -107,7 +107,10 @@ jobs:
     - name: Build frontend with backend URL
       run: |
         cd frontend
+        echo "🔍 Backend URL from job: ${{ needs.deploy-backend.outputs.backend_url }}"
         echo "VITE_API_URL=${{ needs.deploy-backend.outputs.backend_url }}/api" > .env.production
+        echo "🔍 Contents of .env.production:"
+        cat .env.production
         npm run build
         
     - name: Debug Static Web App Token
