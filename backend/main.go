@@ -16,7 +16,7 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// Configure CORS
+	// Configure CORS - Updated for Azure Static Web Apps
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{
 			"http://localhost:5173", 
