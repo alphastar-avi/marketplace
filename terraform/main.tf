@@ -16,9 +16,15 @@ data "azurerm_resource_group" "marketplace" {
   name = "rg-marketplace-${var.environment}"
 }
 
-# Container Apps Environment - Use existing one
-data "azurerm_container_app_environment" "marketplace" {
+# Container Apps Environment - Import existing one
+import {
+  to = azurerm_container_app_environment.marketplace
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.App/managedEnvironments/cae-marketplace-dev"
+}
+
+resource "azurerm_container_app_environment" "marketplace" {
   name                = "cae-marketplace-${var.environment}"
+  location            = data.azurerm_resource_group.marketplace.location
   resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
@@ -61,10 +67,15 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
   end_ip_address   = "0.0.0.0"
 }
 
-# Container App
+# Container App - Import existing one
+import {
+  to = azurerm_container_app.marketplace_backend
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.App/containerApps/ca-marketplace-backend-dev"
+}
+
 resource "azurerm_container_app" "marketplace_backend" {
   name                         = "ca-marketplace-backend-${var.environment}"
-  container_app_environment_id = data.azurerm_container_app_environment.marketplace.id
+  container_app_environment_id = azurerm_container_app_environment.marketplace.id
   resource_group_name          = data.azurerm_resource_group.marketplace.name
   revision_mode                = "Single"
 
