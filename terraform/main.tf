@@ -30,7 +30,7 @@ resource "azurerm_container_app_environment" "marketplace" {
 
 # PostgreSQL Flexible Server - Use existing one
 data "azurerm_postgresql_flexible_server" "marketplace" {
-  name                = "psql-marketplace-dev-garri"  # Use the latest existing one
+  name                = "psql-marketplace-dev-xgarri"  # Use the latest existing one
   resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
