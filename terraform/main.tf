@@ -78,7 +78,7 @@ resource "azurerm_container_app" "marketplace_backend" {
 
       env {
         name  = "DB_HOST"
-        value = azurerm_postgresql_flexible_server.marketplace.fqdn
+        value = data.azurerm_postgresql_flexible_server.marketplace.fqdn
       }
 
       env {
