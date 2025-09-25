@@ -12,7 +12,7 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     outputs:
-      backend-url: ${{ steps.terraform-output.outputs.backend_url }}
+      backend_url: ${{ steps.terraform-output.outputs.backend_url }}
     
     steps:
     - name: Checkout code
