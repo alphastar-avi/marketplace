@@ -42,7 +42,7 @@ func main() {
 
 	// Start server
 	port := "8080"
-	log.Printf("Server starting on port %s", port)
+	log.Printf("Server starting on port %s with CORS enabled", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
