@@ -34,11 +34,13 @@ jobs:
         echo "version=v${VERSION}" >> $GITHUB_OUTPUT
         echo "Generated version: v${VERSION}"
         
-    - name: Pull and retag image
+    - name: Build and push Docker image
       run: |
-        docker pull alphastar59/marketplace-backend-alpine-amd64:latest
-        docker tag alphastar59/marketplace-backend-alpine-amd64:latest alphastar59/marketplace-backend-alpine-amd64:${{ steps.version.outputs.version }}
+        cd backend
+        docker build --platform linux/amd64 -t alphastar59/marketplace-backend-alpine-amd64:${{ steps.version.outputs.version }} .
+        docker tag alphastar59/marketplace-backend-alpine-amd64:${{ steps.version.outputs.version }} alphastar59/marketplace-backend-alpine-amd64:latest
         docker push alphastar59/marketplace-backend-alpine-amd64:${{ steps.version.outputs.version }}
+        docker push alphastar59/marketplace-backend-alpine-amd64:latest
         
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
