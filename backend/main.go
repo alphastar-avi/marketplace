@@ -27,7 +27,17 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
+		MaxAge:           12 * 3600, // 12 hours
 	}))
+
+	// Debug CORS
+	r.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		if origin != "" {
+			log.Printf("🔍 CORS Request - Origin: %s, Method: %s, Path: %s", origin, c.Request.Method, c.Request.URL.Path)
+		}
+		c.Next()
+	})
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
