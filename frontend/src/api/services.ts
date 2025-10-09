@@ -48,8 +48,8 @@ export const favoritesAPI = {
 // Auth API
 export const authAPI = {
   login: (credentials: { email: string; password: string }) => 
-    api.post('/auth/login', credentials),
+    api.post('/api/auth/login', credentials),
   register: (userData: { name: string; email: string; password: string; year?: string; department?: string }) => 
-    api.post('/auth/register', userData),
-  getMe: () => api.get('/auth/me'),
+    api.post('/api/auth/register', userData),
+  getMe: () => api.get('/api/auth/me'),
 }
