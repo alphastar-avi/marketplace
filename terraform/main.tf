@@ -11,33 +11,27 @@ provider "azurerm" {
   features {}
 }
 
-# Resource Group
-resource "azurerm_resource_group" "marketplace" {
-  name     = "rg-marketplace-${var.environment}"
-  location = var.location
+# Resource Group - Use existing one created by Static Web App
+data "azurerm_resource_group" "marketplace" {
+  name = "rg-marketplace-${var.environment}"
 }
 
-# Container Apps Environment
+# Container Apps Environment - Import existing one
+import {
+  to = azurerm_container_app_environment.marketplace
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.App/managedEnvironments/cae-marketplace-dev"
+}
+
 resource "azurerm_container_app_environment" "marketplace" {
   name                = "cae-marketplace-${var.environment}"
-  location            = azurerm_resource_group.marketplace.location
-  resource_group_name = azurerm_resource_group.marketplace.name
+  location            = data.azurerm_resource_group.marketplace.location
+  resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
-# PostgreSQL Flexible Server
-resource "azurerm_postgresql_flexible_server" "marketplace" {
-  name                   = "psql-marketplace-${var.environment}-${random_string.suffix.result}"
-  resource_group_name    = azurerm_resource_group.marketplace.name
-  location               = azurerm_resource_group.marketplace.location
-  version                = "13"
-  administrator_login    = var.db_admin_username
-  administrator_password = var.db_admin_password
-  zone                   = "1"
-
-  storage_mb = 32768
-  sku_name   = "B_Standard_B1ms"
-
-  backup_retention_days = 7
+# PostgreSQL Flexible Server - Use existing one
+data "azurerm_postgresql_flexible_server" "marketplace" {
+  name                = "psql-marketplace-dev-xgarri"  # Use the latest existing one
+  resource_group_name = data.azurerm_resource_group.marketplace.name
 }
 
 # Random string for unique naming
@@ -47,27 +41,42 @@ resource "random_string" "suffix" {
   upper   = false
 }
 
-# PostgreSQL Database
+# PostgreSQL Database - Import existing one
+import {
+  to = azurerm_postgresql_flexible_server_database.marketplace
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.DBforPostgreSQL/flexibleServers/psql-marketplace-dev-xgarri/databases/marketplace"
+}
+
 resource "azurerm_postgresql_flexible_server_database" "marketplace" {
   name      = var.db_name
-  server_id = azurerm_postgresql_flexible_server.marketplace.id
+  server_id = data.azurerm_postgresql_flexible_server.marketplace.id
   collation = "en_US.utf8"
   charset   = "utf8"
 }
 
-# PostgreSQL Firewall Rule (Allow Azure Services)
+# PostgreSQL Firewall Rule - Import existing one
+import {
+  to = azurerm_postgresql_flexible_server_firewall_rule.azure_services
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.DBforPostgreSQL/flexibleServers/psql-marketplace-dev-xgarri/firewallRules/AllowAzureServices"
+}
+
 resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
   name             = "AllowAzureServices"
-  server_id        = azurerm_postgresql_flexible_server.marketplace.id
+  server_id        = data.azurerm_postgresql_flexible_server.marketplace.id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
 }
 
-# Container App
+# Container App - Import existing one
+import {
+  to = azurerm_container_app.marketplace_backend
+  id = "/subscriptions/0fb50fc5-dd1a-4137-9b95-4f5ef7502a10/resourceGroups/rg-marketplace-dev/providers/Microsoft.App/containerApps/ca-marketplace-backend-dev"
+}
+
 resource "azurerm_container_app" "marketplace_backend" {
   name                         = "ca-marketplace-backend-${var.environment}"
   container_app_environment_id = azurerm_container_app_environment.marketplace.id
-  resource_group_name          = azurerm_resource_group.marketplace.name
+  resource_group_name          = data.azurerm_resource_group.marketplace.name
   revision_mode                = "Single"
 
   template {
@@ -79,7 +88,7 @@ resource "azurerm_container_app" "marketplace_backend" {
 
       env {
         name  = "DB_HOST"
-        value = azurerm_postgresql_flexible_server.marketplace.fqdn
+        value = data.azurerm_postgresql_flexible_server.marketplace.fqdn
       }
 
       env {
@@ -110,6 +119,11 @@ resource "azurerm_container_app" "marketplace_backend" {
       env {
         name  = "GIN_MODE"
         value = "release"
+      }
+
+      env {
+        name  = "DB_SSLMODE"
+        value = "require"
       }
     }
 

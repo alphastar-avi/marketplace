@@ -1,0 +1,74 @@
+name: Lint (Non-blocking)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint Code Base
+    runs-on: ubuntu-latest
+    continue-on-error: true  # This makes the job continue even if there are linting errors
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # Backend Linting
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Run Go linter
+      run: |
+        cd backend
+        echo "🔍 Running Go linter..."
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.0
+        export PATH=$PATH:$(go env GOPATH)/bin
+        golangci-lint run --timeout 5m --out-format=github-actions || echo "⚠️ Go linting found issues"
+    
+    # Frontend Linting
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Run ESLint
+      run: |
+        cd frontend
+        echo "🔍 Running ESLint..."
+        npx eslint . --ext .js,.jsx,.ts,.tsx --quiet --color || echo "⚠️ ESLint found issues"
+        
+    - name: Run TypeScript type check
+      run: |
+        cd frontend
+        echo "🔍 Running TypeScript check..."
+        npx tsc --noEmit --pretty || echo "⚠️ TypeScript found issues"
+        
+    # Formatting (info only)
+    - name: Check Go formatting
+      run: |
+        cd backend
+        echo "🔍 Checking Go formatting..."
+        UNFORMATTED=$(gofmt -l . | grep -v '^vendor/')
+        if [ -n "$UNFORMATTED" ]; then
+          echo "⚠️ Some Go files need formatting. Run 'gofmt -w .'"
+          echo "$UNFORMATTED"
+        fi
+        
+    - name: Check frontend formatting
+      run: |
+        cd frontend
+        echo "🔍 Checking frontend formatting..."
+        npx prettier --list-different "**/*.{js,jsx,ts,tsx,json,css,scss,md}" --ignore-path .gitignore || 
+          echo "⚠️ Some files need formatting. Run 'npx prettier --write .'"

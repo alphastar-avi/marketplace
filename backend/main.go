@@ -16,14 +16,28 @@ func main() {
 	// Create Gin router
 	r := gin.Default()
 
-	// Configure CORS
+	// Configure CORS - Updated for Azure Static Web Apps
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"}, // Vite dev server
+		AllowOrigins:     []string{
+			"http://localhost:5173", 
+			"http://localhost:3000",
+			"https://green-mud-0476ecf00.1.azurestaticapps.net", // Azure Static Web App
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
+		MaxAge:           12 * 3600, // 12 hours
 	}))
+
+	// Debug CORS
+	r.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		if origin != "" {
+			log.Printf("🔍 CORS Request - Origin: %s, Method: %s, Path: %s", origin, c.Request.Method, c.Request.URL.Path)
+		}
+		c.Next()
+	})
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
@@ -38,7 +52,7 @@ func main() {
 
 	// Start server
 	port := "8080"
-	log.Printf("Server starting on port %s", port)
+	log.Printf("Server starting on port %s with CORS enabled", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
