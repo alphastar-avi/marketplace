@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"net/http"
 	"os"
@@ -68,6 +69,7 @@ func GenerateProductDescriptionFromTempFiles(title, category string, tempFilePat
 	for _, filePath := range tempFilePaths {
 		base64Data, mimeType, err := readTempFileToBase64(filePath)
 		if err != nil {
+			log.Printf("⚠️  Error reading temp file %s: %v", filePath, err)
 			continue // Skip invalid files
 		}
 
@@ -257,6 +259,7 @@ func callGeminiAPI(parts []GeminiPart) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("❌ Gemini API HTTP error: status %d, body: %s", resp.StatusCode, string(body))
 		return "", fmt.Errorf("Gemini API error: status %d, body: %s", resp.StatusCode, string(body))
 	}
 
