@@ -69,14 +69,16 @@ jobs:
         cd terraform
         terraform plan \
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
-          -var="container_image_tag=${{ steps.version.outputs.version }}"
+          -var="container_image_tag=${{ steps.version.outputs.version }}" \
+          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}"
           
     - name: Terraform Apply
       run: |
         cd terraform
         terraform apply -auto-approve \
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
-          -var="container_image_tag=${{ steps.version.outputs.version }}"
+          -var="container_image_tag=${{ steps.version.outputs.version }}" \
+          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}"
           
     - name: Get Backend URL
       id: terraform-output

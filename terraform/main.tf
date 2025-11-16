@@ -125,6 +125,11 @@ resource "azurerm_container_app" "marketplace_backend" {
         name  = "DB_SSLMODE"
         value = "require"
       }
+
+      env {
+        name        = "GEMINI_API_KEY"
+        secret_name = "gemini-api-key"
+      }
     }
 
     min_replicas = 0
@@ -134,6 +139,11 @@ resource "azurerm_container_app" "marketplace_backend" {
   secret {
     name  = "db-password"
     value = var.db_admin_password
+  }
+
+  secret {
+    name  = "gemini-api-key"
+    value = var.gemini_api_key
   }
 
   ingress {

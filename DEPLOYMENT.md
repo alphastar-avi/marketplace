@@ -14,7 +14,10 @@ AZURE_CLIENT_SECRET = <your-azure-client-secret>
 AZURE_TENANT_ID = <your-azure-tenant-id>
 AZURE_SUBSCRIPTION_ID = (run: az account show --query id -o tsv)
 DB_PASSWORD = <your-secure-database-password>
+GEMINI_API_KEY = <your-google-gemini-api-key> (optional - for AI description generation)
 ```
+
+**Note**: `GEMINI_API_KEY` is optional. If not provided, the AI description feature will use template-based descriptions as a fallback.
 
 ### 2. Create Static Web App (One-time setup)
 1. Go to Azure Portal → Create Resource → Static Web Apps
@@ -97,9 +100,15 @@ npm run dev
 ```bash
 cd terraform
 terraform init
-terraform plan -var="db_admin_password=Marketplace_Azure_1234*"
-terraform apply -var="db_admin_password=Marketplace_Azure_1234*"
+terraform plan \
+  -var="db_admin_password=Marketplace_Azure_1234*" \
+  -var="gemini_api_key=<your-gemini-api-key>"
+terraform apply \
+  -var="db_admin_password=Marketplace_Azure_1234*" \
+  -var="gemini_api_key=<your-gemini-api-key>"
 ```
+
+**Note**: `gemini_api_key` is optional. Leave empty (`""`) if you don't want to use Gemini AI.
 
 ### Docker Commands
 ```bash

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { ArrowLeft, X } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
-import { aiRefine } from '../../utils'
+import { productsAPI } from '../../api/services'
 import GlassCard from '../ui/GlassCard'
 import Spinner from '../ui/Spinner'
 import { Product } from '../../types'
@@ -16,19 +16,33 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
   const [images, setImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const onDrop = (files: FileList | null) => {
     if (!files) return
+    const newImages: string[] = []
+    const newFiles: File[] = []
     Array.from(files).slice(0, 6).forEach((f) => {
       const reader = new FileReader()
-      reader.onload = (e) => setImages((s) => [e.target?.result as string, ...s])
+      reader.onload = (e) => {
+        newImages.push(e.target?.result as string)
+        if (newImages.length === Math.min(files.length, 6)) {
+          setImages((s) => [...s, ...newImages])
+        }
+      }
       reader.readAsDataURL(f)
+      newFiles.push(f)
     })
+    setImageFiles((s) => [...s, ...newFiles])
   }
 
-  const removeImg = (i: number) => setImages((s) => s.filter((_, idx) => idx !== i))
+  const removeImg = (i: number) => {
+    setImages((s) => s.filter((_, idx) => idx !== i))
+    setImageFiles((s) => s.filter((_, idx) => idx !== i))
+  }
 
   const addTag = () => {
     const t = tagInput.trim()
@@ -38,8 +52,39 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   }
 
   const generateDesc = async () => {
-    const refined = await aiRefine(desc || title || 'Good item for students')
-    setDesc(refined)
+    if (!title || imageFiles.length === 0) {
+      alert('Please enter a title and upload at least one image to generate description')
+      return
+    }
+
+    setGenerating(true)
+    try {
+      const formData = new FormData()
+      formData.append('title', title)
+      formData.append('category', category)
+      
+      // Add image files
+      imageFiles.forEach((file) => {
+        formData.append('images', file)
+      })
+
+      const startTime = Date.now()
+      const response = await productsAPI.generateDescriptionWithFiles(formData)
+      const processingTime = Date.now() - startTime
+
+      setDesc(response.data.description)
+      
+      // Show alert with model and processing time
+      const modelInfo = response.data.model === 'gemini-2.0-flash' 
+        ? 'Generated with Gemini AI' 
+        : 'Generated with template (Gemini API not configured)'
+      alert(`${modelInfo}\nProcessing time: ${response.data.processing_time_ms}ms`)
+    } catch (error: any) {
+      console.error('Error generating description:', error)
+      alert('Failed to generate description. Please try again.')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   const submit = async () => {
@@ -127,8 +172,15 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
               <div className="mt-3">
                 <label className="text-sm font-semibold">Description</label>
                 <div className="mt-2 flex gap-2">
-                  <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} className="flex-1 p-2 bg-transparent border rounded-md" />
-                  <button onClick={generateDesc} className="p-3 rounded-md bg-white/6" title="AI assist">AI</button>
+                  <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} className="flex-1 p-2 bg-transparent border rounded-md" disabled={generating} />
+                  <button 
+                    onClick={generateDesc} 
+                    className="p-3 rounded-md bg-white/6" 
+                    title="AI assist"
+                    disabled={generating || !title || imageFiles.length === 0}
+                  >
+                    {generating ? <Spinner /> : 'AI'}
+                  </button>
                 </div>
               </div>
 

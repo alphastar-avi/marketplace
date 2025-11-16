@@ -8,6 +8,11 @@ export const productsAPI = {
   create: (product: Omit<Product, 'id' | 'postedAt'>) => api.post<Product>('/products', product),
   update: (id: string, product: Partial<Product>) => api.put<Product>(`/products/${id}`, product),
   delete: (id: string) => api.delete(`/products/${id}`),
+  // AI description generation
+  generateDescription: (data: { title: string; category: string; image_urls: string[] }) =>
+    api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description', data),
+  generateDescriptionWithFiles: (formData: FormData) =>
+    api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description-with-files', formData),
 }
 
 // Users API
