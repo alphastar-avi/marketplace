@@ -33,3 +33,10 @@ variable "container_image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "gemini_api_key" {
+  description = "Google Gemini API key for AI description generation (optional)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
