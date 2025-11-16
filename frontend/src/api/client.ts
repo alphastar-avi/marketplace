@@ -1,6 +1,8 @@
 import axios from 'axios'
 
-const API_BASE_URL = (import.meta as any).env.VITE_API_URL || 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
+// Get base URL from env or use default, ensure it ends with /api
+const rawBaseUrl = (import.meta as any).env.VITE_API_URL || 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io'
+const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`
 
 // Debug logging
 console.log('🔍 VITE_API_URL from env:', (import.meta as any).env.VITE_API_URL)
