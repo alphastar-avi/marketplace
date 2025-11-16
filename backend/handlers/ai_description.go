@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"marketplace-backend/config"
 	"mime/multipart"
 	"net/http"
@@ -84,7 +85,9 @@ func GenerateDescriptionWithFiles(c *gin.Context) {
 	defer cleanupTempFiles(tempFilePaths)
 
 	// Generate description
+	log.Printf("🤖 Generating description for: %s (category: %s, images: %d)", title, category, len(tempFilePaths))
 	description, model := generateWithTempFiles(title, category, tempFilePaths)
+	log.Printf("✅ Generated description using model: %s (length: %d)", model, len(description))
 
 	processingTime := time.Since(startTime).Milliseconds()
 
@@ -142,15 +145,18 @@ func generateWithFallback(title, category string, imageURLs []string) (string, s
 func generateWithTempFiles(title, category string, tempFilePaths []string) (string, string) {
 	description, err := config.GenerateProductDescriptionFromTempFiles(title, category, tempFilePaths)
 	if err != nil {
+		log.Printf("⚠️  Gemini generation failed, using template fallback: %v", err)
 		// Fallback to template
 		return config.GenerateTemplateDescription(title, category), "template"
 	}
 
 	// Check if Gemini was actually used (not fallback)
 	if config.IsGeminiConfigured() {
+		log.Printf("✅ Using Gemini-generated description")
 		return description, "gemini-2.0-flash"
 	}
 
+	log.Printf("ℹ️  Using template-generated description (Gemini not configured)")
 	return description, "template"
 }
 
