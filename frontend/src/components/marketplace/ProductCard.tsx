@@ -43,7 +43,11 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
         </button>
       )}
       <div className="h-72 rounded-md overflow-hidden mb-3 bg-black/20 grid place-items-center">
-        <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover" />
+        {product.images && product.images.length > 0 ? (
+          <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover" />
+        ) : (
+          <div className="text-xs opacity-70">No image</div>
+        )}
       </div>
       <div className="flex items-center justify-between mb-2">
         <div>

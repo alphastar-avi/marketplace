@@ -23,19 +23,42 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
 
   const onDrop = (files: FileList | null) => {
     if (!files) return
+    
+    // Calculate how many more files we can add (max 6 total)
+    const remainingSlots = 6 - imageFiles.length
+    if (remainingSlots <= 0) {
+      alert('You can upload up to 6 images')
+      return
+    }
+    
     const newImages: string[] = []
     const newFiles: File[] = []
-    Array.from(files).slice(0, 6).forEach((f) => {
+    
+    // Only process up to the remaining slots
+    Array.from(files).slice(0, remainingSlots).forEach((file) => {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert(`File ${file.name} is not an image`)
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File ${file.name} is too large. Maximum size is 5MB.`)
+        return
+      }
+      
       const reader = new FileReader()
       reader.onload = (e) => {
         newImages.push(e.target?.result as string)
-        if (newImages.length === Math.min(files.length, 6)) {
+        if (newImages.length === Math.min(files.length, remainingSlots)) {
           setImages((s) => [...s, ...newImages])
         }
       }
-      reader.readAsDataURL(f)
-      newFiles.push(f)
+      reader.readAsDataURL(file)
+      newFiles.push(file)
     })
+    
     setImageFiles((s) => [...s, ...newFiles])
   }
 
@@ -88,22 +111,60 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   }
 
   const submit = async () => {
-    if (!title || !price || images.length === 0) return alert('Please enter title, price and at least one image')
+    if (!title || !price || imageFiles.length === 0) return alert('Please enter title, price and upload at least one image')
+    
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 800))
-    addProduct({
-      title,
-      price,
-      description: desc,
-      images,
-      condition,
-      category,
-      tags,
-      sellerId: user?.id || 'seller_demo',
-      status: 'available',
-    })
-    setLoading(false)
-    onDone()
+    
+    try {
+      const formData = new FormData()
+      
+      // Add all form fields to FormData
+      formData.append('title', title)
+      formData.append('price', price.toString())
+      formData.append('description', desc)
+      formData.append('condition', condition)
+      formData.append('category', category)
+      formData.append('tags', JSON.stringify(tags))
+      
+      // Add user ID if available
+      if (user?.id) {
+        formData.append('sellerId', user.id)
+      }
+      
+      // Add all image files
+      imageFiles.forEach((file) => {
+        formData.append('images', file)
+      })
+      
+      // Call the API with FormData
+      const response = await productsAPI.create(formData)
+      
+      // Update the local state with the new product
+      const productImages = Array.isArray(response.data.images) 
+        ? response.data.images 
+        : JSON.parse(response.data.images || '[]')
+      
+      addProduct({
+        ...response.data,
+        images: productImages,
+      })
+      
+      // Reset form
+      setTitle('')
+      setPrice(0)
+      setDesc('')
+      setTags([])
+      setImages([])
+      setImageFiles([])
+      
+      // Close the form
+      onDone()
+    } catch (error) {
+      console.error('Error creating product:', error)
+      alert('Failed to create product. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

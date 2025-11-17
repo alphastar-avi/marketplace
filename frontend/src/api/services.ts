@@ -5,14 +5,26 @@ import { Product, UserType, Chat, Message, PurchaseRequest } from '../types'
 export const productsAPI = {
   getAll: () => api.get<Product[]>('/products'),
   getById: (id: string) => api.get<Product>(`/products/${id}`),
-  create: (product: Omit<Product, 'id' | 'postedAt'>) => api.post<Product>('/products', product),
-  update: (id: string, product: Partial<Product>) => api.put<Product>(`/products/${id}`, product),
+  create: (formData: FormData) => api.post<Product>('/products', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+  update: (id: string, formData: FormData) => api.put<Product>(`/products/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
   delete: (id: string) => api.delete(`/products/${id}`),
   // AI description generation
   generateDescription: (data: { title: string; category: string; image_urls: string[] }) =>
     api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description', data),
   generateDescriptionWithFiles: (formData: FormData) =>
-    api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description-with-files', formData),
+    api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description-with-files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
 }
 
 // Users API
