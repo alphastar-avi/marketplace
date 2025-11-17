@@ -70,7 +70,9 @@ jobs:
         terraform plan \
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
           -var="container_image_tag=${{ steps.version.outputs.version }}" \
-          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}"
+          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}" \
+          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
     - name: Terraform Apply
       run: |
@@ -78,7 +80,9 @@ jobs:
         terraform apply -auto-approve \
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
           -var="container_image_tag=${{ steps.version.outputs.version }}" \
-          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}"
+          -var="gemini_api_key=${{ secrets.GEMINI_API_KEY }}" \
+          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
     - name: Get Backend URL
       id: terraform-output
