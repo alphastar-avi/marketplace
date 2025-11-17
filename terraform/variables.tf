@@ -40,3 +40,14 @@ variable "gemini_api_key" {
   default     = ""
   sensitive   = true
 }
+
+# Existing Azure Storage resources (required when using data sources)
+variable "storage_account_name" {
+  description = "Name of the existing Azure Storage Account that will store product images"
+  type        = string
+}
+
+variable "storage_container_name" {
+  description = "Name of the existing Blob container (e.g., 'products')"
+  type        = string
+}
