@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~>3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~>3.5"
+    }
   }
 }
 
@@ -39,6 +43,24 @@ resource "random_string" "suffix" {
   length  = 6
   special = false
   upper   = false
+}
+
+# Storage Account for Blob uploads
+resource "azurerm_storage_account" "marketplace" {
+  name                     = "stmarket${var.environment}${random_string.suffix.result}"
+  resource_group_name      = data.azurerm_resource_group.marketplace.name
+  location                 = data.azurerm_resource_group.marketplace.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  allow_blob_public_access = true
+  min_tls_version          = "TLS1_2"
+}
+
+resource "azurerm_storage_container" "products" {
+  name                  = "products"
+  storage_account_name  = azurerm_storage_account.marketplace.name
+  container_access_type = "blob"
 }
 
 # PostgreSQL Database - Import existing one
@@ -130,6 +152,22 @@ resource "azurerm_container_app" "marketplace_backend" {
         name        = "GEMINI_API_KEY"
         secret_name = "gemini-api-key"
       }
+
+      # Azure Blob Storage env
+      env {
+        name  = "AZURE_STORAGE_ACCOUNT_NAME"
+        value = azurerm_storage_account.marketplace.name
+      }
+
+      env {
+        name        = "AZURE_STORAGE_CONNECTION_STRING"
+        secret_name = "azure-blob-conn"
+      }
+
+      env {
+        name  = "AZURE_STORAGE_CONTAINER"
+        value = azurerm_storage_container.products.name
+      }
     }
 
     min_replicas = 0
@@ -144,6 +182,12 @@ resource "azurerm_container_app" "marketplace_backend" {
   secret {
     name  = "gemini-api-key"
     value = var.gemini_api_key
+  }
+
+  # Storage connection string secret
+  secret {
+    name  = "azure-blob-conn"
+    value = azurerm_storage_account.marketplace.primary_connection_string
   }
 
   ingress {

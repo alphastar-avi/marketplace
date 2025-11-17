@@ -131,7 +131,11 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                   ? (<div className="col-span-full p-6 text-center opacity-80">You have no listings yet</div>)
                   : myListings.map((p) => (
                       <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
-                        <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
+                        {p.images && p.images.length > 0 ? (
+                          <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
+                        ) : (
+                          <div className="h-28 w-full rounded-md mb-2 bg-white/6 grid place-items-center text-xs opacity-70">No image</div>
+                        )}
                         <div className="font-semibold">{p.title}</div>
                         <div className="text-xs opacity-70">₹{p.price}</div>
                         {p.status === 'sold' && <div className="text-xs text-red-400 mt-1">Sold</div>}
@@ -141,7 +145,11 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                   ? (<div className="col-span-full p-6 text-center opacity-80">You have no favorites yet</div>)
                   : favoriteProducts.map((p) => (
                       <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
-                        <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
+                        {p.images && p.images.length > 0 ? (
+                          <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2" />
+                        ) : (
+                          <div className="h-28 w-full rounded-md mb-2 bg-white/6 grid place-items-center text-xs opacity-70">No image</div>
+                        )}
                         <div className="font-semibold">{p.title}</div>
                         <div className="text-xs opacity-70">₹{p.price}</div>
                         {p.status === 'sold' && <div className="text-xs text-red-400 mt-1">Sold</div>}

@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
+	"marketplace-backend/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -66,15 +68,41 @@ func CreateProduct(c *gin.Context) {
 		return
 	}
 
-	var req CreateProductRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// Parse the multipart form
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil { // 32 MB max memory
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
 		return
 	}
 
-	// Convert arrays to JSON strings
-	imagesJSON, _ := json.Marshal(req.Images)
-	tagsJSON, _ := json.Marshal(req.Tags)
+	// Get form values
+	req := CreateProductRequest{
+		Title:       c.PostForm("title"),
+		Description: c.PostForm("description"),
+		Condition:   c.PostForm("condition"),
+		Category:    c.PostForm("category"),
+	}
+
+	// Parse price
+	priceStr := c.PostForm("price")
+	price := 0.0
+	if priceStr != "" {
+		_, err := fmt.Sscanf(priceStr, "%f", &price)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid price format"})
+			return
+		}
+	}
+	req.Price = price
+
+	// Parse tags
+	tags := c.PostForm("tags")
+	if tags != "" {
+		err := json.Unmarshal([]byte(tags), &req.Tags)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tags format"})
+			return
+		}
+	}
 
 	// Get user's college
 	var user models.User
@@ -82,6 +110,36 @@ func CreateProduct(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 		return
 	}
+
+	// Handle file uploads
+	form, _ := c.MultipartForm()
+	files := form.File["images"]
+	var imageURLs []string
+
+	if len(files) > 0 {
+		// Initialize Azure Blob Storage client
+		blobStorage, err := storage.NewAzureBlobStorage()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize storage"})
+			return
+		}
+
+		// Upload each file
+		for _, file := range files {
+			fileURL, err := blobStorage.UploadFile(file, "products")
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": fmt.Sprintf("Failed to upload file %s: %v", file.Filename, err),
+				})
+				return
+			}
+			imageURLs = append(imageURLs, fileURL)
+		}
+	}
+
+	// Convert arrays to JSON strings
+	imagesJSON, _ := json.Marshal(imageURLs)
+	tagsJSON, _ := json.Marshal(req.Tags)
 
 	product := models.Product{
 		Title:       req.Title,
