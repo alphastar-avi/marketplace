@@ -3,7 +3,7 @@ import { X, Send, Check, X as XIcon } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 
 export default function ChatPage({ chatId, onClose }: { chatId: string; onClose: () => void }) {
-  const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest } = useMarketplace()
+  const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest, refreshChat } = useMarketplace()
   const chat = chats.find((c) => c.id === chatId)
   const [text, setText] = useState('')
   const ref = useRef<HTMLDivElement | null>(null)
@@ -11,6 +11,13 @@ export default function ChatPage({ chatId, onClose }: { chatId: string; onClose:
   useEffect(() => {
     ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' })
   }, [chat?.messages?.length])
+
+  useEffect(() => {
+    if (!chatId) return
+    refreshChat(chatId)
+    const interval = window.setInterval(() => refreshChat(chatId), 2500)
+    return () => window.clearInterval(interval)
+  }, [chatId, refreshChat])
 
   if (!chat) return <div className="p-8">Chat not found</div>
 
@@ -21,9 +28,6 @@ export default function ChatPage({ chatId, onClose }: { chatId: string; onClose:
     if (!text.trim()) return
     pushMessage(chat.id, user?.id || 'guest', text.trim())
     setText('')
-    setTimeout(() => {
-      pushMessage(chat.id, chat.participants.find((p) => p !== user?.id) || 'seller', "Thanks! I'm available — let's discuss pickup.")
-    }, 900 + Math.random() * 1200)
   }
 
   const handlePurchaseRequest = (requestId: string, status: 'accepted' | 'declined') => {
@@ -62,14 +66,29 @@ export default function ChatPage({ chatId, onClose }: { chatId: string; onClose:
           </div>
         ))}
 
-        {chat.messages.map((m) => (
-          <div key={m.id} className={`flex ${m.from === user?.id ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-3 rounded-xl ${m.from === user?.id ? 'bg-indigo-500 text-white' : 'bg-white/8'}`}>
-              <div className="text-sm">{m.text}</div>
-              <div className="text-xs opacity-60 text-right mt-1">{new Date(m.at).toLocaleTimeString()}</div>
+        {chat.messages.map((m) => {
+          const senderId =
+            typeof m.from === 'string'
+              ? m.from
+              : m.from?.id || m.from_id || ''
+          const isFromUser = senderId === user?.id
+          const timestamp = m.at || m.created_at
+
+          return (
+            <div key={m.id} className={`flex ${isFromUser ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[80%] p-3 rounded-xl ${
+                  isFromUser ? 'bg-indigo-500 text-white' : 'bg-white/8 text-white'
+                }`}
+              >
+                <div className="text-sm">{m.text}</div>
+                <div className="text-xs opacity-60 text-right mt-1">
+                  {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="p-4 border-t border-white/6 flex gap-2 rounded-bl-3xl" style={{ marginBottom: '8px' }}>

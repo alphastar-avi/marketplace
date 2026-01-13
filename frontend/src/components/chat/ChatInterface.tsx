@@ -9,7 +9,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ chatId, onClose, isMobile = false }: ChatInterfaceProps) {
-  const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest } = useMarketplace()
+  const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest, refreshChat } = useMarketplace()
   const chat = chats.find((c) => c.id === chatId)
   const [text, setText] = useState('')
   const messagesRef = useRef<HTMLDivElement | null>(null)
@@ -17,6 +17,13 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
   useEffect(() => {
     messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: 'smooth' })
   }, [chat?.messages?.length])
+
+  useEffect(() => {
+    if (!chatId) return
+    refreshChat(chatId)
+    const interval = window.setInterval(() => refreshChat(chatId), 2500)
+    return () => window.clearInterval(interval)
+  }, [chatId, refreshChat])
 
   if (!chat) {
     return (
@@ -43,16 +50,6 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
     if (!text.trim()) return
     pushMessage(chat.id, user?.id || 'guest', text.trim())
     setText('')
-    
-    // Simulate response
-    setTimeout(() => {
-      const otherParticipantId = chat.participants.find((p: any) => {
-        const participantId = typeof p === 'string' ? p : p.id
-        return participantId !== user?.id
-      })
-      const participantId = typeof otherParticipantId === 'string' ? otherParticipantId : (otherParticipantId as any)?.id || 'seller'
-      pushMessage(chat.id, participantId, "Thanks! I'm available — let's discuss pickup.")
-    }, 900 + Math.random() * 1200)
   }
 
   const handlePurchaseRequest = (requestId: string, status: 'accepted' | 'declined') => {
@@ -116,7 +113,12 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
         {/* Chat Messages */}
         {chat.messages.map((message) => {
-          const isFromUser = message.from === user?.id
+          const senderId =
+            typeof message.from === 'string'
+              ? message.from
+              : message.from?.id || message.from_id || ''
+          const isFromUser = senderId === user?.id
+          const timestamp = message.at || message.created_at
           
           return (
             <div key={message.id} className={`flex ${isFromUser ? 'justify-end' : 'justify-start'}`}>
@@ -127,7 +129,7 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
               }`}>
                 <div className="text-sm leading-relaxed">{message.text}</div>
                 <div className={`text-xs mt-2 ${isFromUser ? 'text-white/70' : 'text-white/50'}`}>
-                  {new Date(message.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                 </div>
               </div>
             </div>

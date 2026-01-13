@@ -32,9 +32,11 @@ export type UserType = {
 
 export type Message = {
   id: string
-  from: string
+  from: string | { id: string; name?: string; email?: string }
+  from_id?: string
   text: string
-  at: string
+  at?: string
+  created_at?: string
 }
 
 export type Chat = {

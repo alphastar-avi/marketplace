@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { Product, UserType, Chat, PurchaseRequest } from '../types'
 import { uid, nowIso, arraysEq, STORAGE_KEYS } from '../utils'
 import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI } from '../api/services'
@@ -18,6 +18,7 @@ type MarketplaceContextType = {
   setChats: React.Dispatch<React.SetStateAction<Chat[]>>
   addChatIfMissing: (productId: string, participants: string[]) => Promise<Chat>
   pushMessage: (chatId: string, from: string, text: string) => Promise<void>
+  refreshChat: (chatId: string) => Promise<void>
   favorites: string[]
   toggleFavorite: (productId: string) => Promise<void>
   purchaseRequests: PurchaseRequest[]
@@ -209,6 +210,40 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const refreshChat = useCallback(async (chatId: string) => {
+    try {
+      const response = await chatsAPI.getById(chatId)
+      const updatedChat = response.data
+      setChats((prev) => {
+        const exists = prev.some((chat) => chat.id === chatId)
+        if (exists) {
+          return prev.map((chat) => (chat.id === chatId ? updatedChat : chat))
+        }
+        return [...prev, updatedChat]
+      })
+    } catch (error) {
+      console.error('Failed to refresh chat:', error)
+    }
+  }, [])
+
+  const refreshChats = useCallback(async () => {
+    try {
+      const response = await chatsAPI.getAll()
+      setChats(response.data)
+    } catch (error) {
+      console.error('Failed to refresh chats:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    const interval = window.setInterval(() => {
+      refreshChats()
+    }, 6000)
+
+    return () => window.clearInterval(interval)
+  }, [isHydrated, refreshChats])
+
   const toggleFavorite = async (productId: string) => {
     if (!user || !user.id.includes('-')) {
       // Handle legacy user IDs - just update locally
@@ -299,6 +334,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         setChats,
         addChatIfMissing,
         pushMessage,
+        refreshChat,
         favorites,
         toggleFavorite,
         purchaseRequests,
