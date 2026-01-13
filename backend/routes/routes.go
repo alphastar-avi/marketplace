@@ -49,6 +49,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Chats routes
 		chats := api.Group("/chats")
+		chats.Use(middleware.AuthMiddleware())
 		{
 			chats.GET("", handlers.GetChats)
 			chats.POST("", handlers.CreateChat)
@@ -59,6 +60,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		// Purchase requests routes
 		requests := api.Group("/requests")
+		requests.Use(middleware.AuthMiddleware())
 		{
 			requests.GET("", handlers.GetPurchaseRequests)
 			requests.POST("", handlers.CreatePurchaseRequest)
