@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
+import { ArrowRight, Chrome, Mail, UserPlus } from 'lucide-react'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -10,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const { setUser } = useMarketplace()
   const navigate = useNavigate()
+  const emailInputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,70 +35,159 @@ export default function Login() {
     }
   }
 
+  const handleGoogle = () => {
+    console.info('Google SSO placeholder clicked')
+  }
+
+  const handleSignupNavigation = () => {
+    navigate('/signup')
+  }
+
+  const handleEmailCTA = () => {
+    emailInputRef.current?.focus()
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Welcome Back
-            </h1>
-            <p className="text-gray-400 mt-2">Sign in to your marketplace account</p>
-          </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#030713] text-white">
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#050d24] via-[#030711] to-[#010308]" />
+        <div className="absolute -top-24 -right-32 h-80 w-80 rounded-full bg-[#3c5dfa]/20 blur-[120px]" />
+        <div className="absolute -bottom-16 -left-24 h-72 w-72 rounded-full bg-[#14b3ff]/10 blur-[140px]" />
+      </div>
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex-1 space-y-8">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
+            College Marketplace · Next
+          </span>
+          <h1 className="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+            College Marketplace
+          </h1>
+          <p className="text-lg text-white/70 sm:text-xl">
+            Buy and sell within your college community. Showcase listings, chat instantly, and discover campus deals—all in one modern interface.
+          </p>
+          <ul className="space-y-3 text-sm text-white/60">
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
+              Curated feed tuned for college trends and micro-communities.
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
+              Built-in chat so buyers and sellers can coordinate instantly.
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
+              Trusted verification to keep every interaction safe.
+            </li>
+          </ul>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                placeholder="Enter your email"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
-                placeholder="Enter your password"
-              />
+        <div className="flex-1 lg:max-w-lg">
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-white">Welcome back</h2>
+              <p className="text-sm text-white/60">Log in to continue to the marketplace.</p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
-            >
-              {loading ? 'Signing In...' : 'Sign In'}
-            </button>
-          </form>
+            <div className="mt-8 space-y-3">
+              <button
+                type="button"
+                onClick={handleGoogle}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/10"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5ff]/10 text-sm font-semibold text-white">
+                  <Chrome size={18} />
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">Continue with Google</p>
+                  <p className="text-xs text-white/50">Single sign-on</p>
+                </div>
+                <ArrowRight size={16} className="text-white/40 group-hover:text-white/70" />
+              </button>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-400">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
-                Sign up
-              </Link>
-            </p>
+              <button
+                type="button"
+                onClick={handleSignupNavigation}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-500/70 via-indigo-500/60 to-blue-500/70 px-4 py-3 text-left transition hover:shadow-lg hover:shadow-indigo-500/20"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
+                  <UserPlus size={18} />
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-white">Create a marketplace account</p>
+                  <p className="text-xs text-white/80">Use the full signup experience</p>
+                </div>
+                <ArrowRight size={16} className="text-white/80" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleEmailCTA}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/8"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-sm font-semibold text-white">
+                  <Mail size={18} />
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">Continue with email</p>
+                  <p className="text-xs text-white/50">Use your college credentials</p>
+                </div>
+                <ArrowRight size={16} className="text-white/40 group-hover:text-white/70" />
+              </button>
+            </div>
+
+            <div className="mt-8 border-t border-white/10 pt-6">
+              {error && (
+                <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Email
+                  </label>
+                  <input
+                    ref={emailInputRef}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    placeholder="student@college.edu"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Enter your password"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#030713] transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? 'Signing In…' : 'Sign in and continue'}
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-xs text-white/50">
+                Demo login — actual authentication will redirect you once verified.
+              </p>
+            </div>
           </div>
         </div>
       </div>
