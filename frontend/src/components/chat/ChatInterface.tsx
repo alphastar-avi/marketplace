@@ -38,6 +38,13 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
   const product = products.find((p) => p.id === chat.productId)
   const pendingRequests = purchaseRequests.filter((pr) => pr.productId === chat.productId && pr.status === 'pending')
+  const isSeller = product?.sellerId === user?.id
+  const sellerPendingRequests = isSeller
+    ? pendingRequests.filter((pr) => pr.sellerId === user?.id)
+    : []
+  const buyerPendingRequest = !isSeller
+    ? pendingRequests.find((pr) => pr.buyerId === user?.id)
+    : null
   const otherParticipantObj = chat.participants.find((p: any) => {
     const participantId = typeof p === 'string' ? p : p.id
     return participantId !== user?.id
@@ -85,12 +92,12 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
       {/* Messages */}
       <div ref={messagesRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Purchase Requests */}
-        {pendingRequests.map((request) => (
+        {/* Purchase Request Actions / Status */}
+        {isSeller && sellerPendingRequests.map((request) => (
           <div key={request.id} className="bg-green-500/20 border border-green-500/30 rounded-xl p-4">
             <div className="text-sm font-semibold text-green-400 mb-2">Purchase Request</div>
             <div className="text-sm opacity-90 mb-3">
-              {user?.name || 'User'} wants to buy this product. Will you accept?
+              {request.buyer?.name || 'Buyer'} wants to buy this product. Will you accept?
             </div>
             <div className="flex gap-2">
               <button 
@@ -110,6 +117,13 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
             </div>
           </div>
         ))}
+
+        {!isSeller && buyerPendingRequest && (
+          <div className="bg-yellow-400/15 border border-yellow-400/30 rounded-xl p-4 text-sm text-yellow-200">
+            <div className="font-semibold text-yellow-300 mb-1">Waiting for approval</div>
+            <p>Your purchase request is pending seller confirmation. We'll notify you once they respond.</p>
+          </div>
+        )}
 
         {/* Chat Messages */}
         {chat.messages.map((message) => {

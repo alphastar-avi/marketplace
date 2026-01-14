@@ -5,7 +5,7 @@ import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct } = useMarketplace()
+  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, purchaseRequests } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -22,11 +22,21 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
     onOpenChat(c.id)
   }
 
-  const handleRequestItem = () => {
+  const pendingRequest = user
+    ? purchaseRequests.find(
+        (r) => r.productId === prod.id && r.buyerId === user.id && r.status === 'pending'
+      )
+    : null
+
+  const handleRequestItem = async () => {
     if (!user?.id) return
-    createPurchaseRequest(prod.id, user.id, prod.sellerId)
-    setShowRequestSent(true)
-    setTimeout(() => setShowRequestSent(false), 3000)
+    try {
+      await createPurchaseRequest(prod.id)
+      setShowRequestSent(true)
+      setTimeout(() => setShowRequestSent(false), 3000)
+    } catch (error) {
+      console.error('Failed to submit purchase request:', error)
+    }
   }
 
   const handleRemoveListing = async () => {
@@ -123,14 +133,32 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
                 </div>
                 <div className="text-sm opacity-80">Posted: {new Date(prod.postedAt).toLocaleString()}</div>
                 <div className="flex gap-2">
-                  {!isOwner && prod.status === 'available' ? (
-                    <button onClick={handleRequestItem} className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold">
-                      Request Item
-                    </button>
-                  ) : (
-                    <button onClick={() => alert('Item not available')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
-                      {prod.status === 'sold' ? 'Sold' : 'Requested'}
-                    </button>
+                  {!isOwner && (
+                    <>
+                      {pendingRequest ? (
+                        <button
+                          disabled
+                          className="flex-1 py-2 rounded-md bg-yellow-400/80 text-black font-semibold cursor-not-allowed border border-yellow-300"
+                        >
+                          Product requested • Waiting for response
+                        </button>
+                      ) : prod.status === 'available' ? (
+                        <button
+                          onClick={handleRequestItem}
+                          className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold"
+                        >
+                          Request Item
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => alert('Item not available')}
+                          className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed"
+                          disabled
+                        >
+                          {prod.status === 'sold' ? 'Sold' : 'Requested'}
+                        </button>
+                      )}
+                    </>
                   )}
                   <button onClick={startChat} className="py-2 px-3 rounded-md bg-white/6">
                     Chat

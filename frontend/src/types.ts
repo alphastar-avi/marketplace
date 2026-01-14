@@ -42,17 +42,37 @@ export type Message = {
 export type Chat = {
   id: string
   productId: string
-  participants: string[]
+  product?: {
+    id: string
+    title: string
+    price?: number
+    status?: Product['status']
+    seller?: UserType
+  }
+  participants: (string | UserType)[]
   messages: Message[]
+  created_at?: string
 }
 
 export type PurchaseRequest = {
   id: string
   productId: string
+  product?: {
+    id: string
+    title: string
+    price?: number
+    status?: Product['status']
+    sellerId?: string
+    seller?: UserType
+  }
   buyerId: string
+  buyer?: UserType
   sellerId: string
+  seller?: UserType
   status: 'pending' | 'accepted' | 'declined'
   createdAt: string
+  updatedAt?: string
+  chatId?: string | null
 }
 
 

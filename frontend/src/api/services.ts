@@ -1,6 +1,11 @@
 import api from './client'
 import { Product, UserType, Chat, Message, PurchaseRequest } from '../types'
 
+type PurchaseRequestCreateResponse = {
+  request: PurchaseRequest
+  chat_id: string | null
+}
+
 // Products API
 export const productsAPI = {
   getAll: () => api.get<Product[]>('/products'),
@@ -47,8 +52,8 @@ export const chatsAPI = {
 // Purchase Requests API
 export const purchaseRequestsAPI = {
   getAll: () => api.get<PurchaseRequest[]>('/requests'),
-  create: (request: { product_id: string; buyer_id: string; seller_id: string }) => 
-    api.post<PurchaseRequest>('/requests', request),
+  create: (request: { product_id: string }) => 
+    api.post<PurchaseRequestCreateResponse>('/requests', request),
   updateStatus: (id: string, status: 'accepted' | 'declined') => 
     api.put<PurchaseRequest>(`/requests/${id}`, { status }),
 }

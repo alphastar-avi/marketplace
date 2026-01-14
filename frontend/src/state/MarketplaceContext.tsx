@@ -8,7 +8,7 @@ import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, aut
 type MarketplaceContextType = {
   products: Product[]
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
-  addProduct: (p: Omit<Product, 'id' | 'postedAt'>) => Promise<Product>
+  addProduct: (p: FormData) => Promise<Product>
   updateProductStatus: (productId: string, status: Product['status']) => Promise<void>
   deleteProduct: (productId: string) => Promise<void>
   user: UserType | null
@@ -22,12 +22,26 @@ type MarketplaceContextType = {
   favorites: string[]
   toggleFavorite: (productId: string) => Promise<void>
   purchaseRequests: PurchaseRequest[]
-  createPurchaseRequest: (productId: string, buyerId: string, sellerId: string) => Promise<PurchaseRequest>
+  createPurchaseRequest: (productId: string) => Promise<{ request: PurchaseRequest; chatId: string | null }>
   updatePurchaseRequest: (requestId: string, status: 'accepted' | 'declined') => Promise<void>
   isHydrated: boolean
 }
 
 const MarketplaceContext = createContext<MarketplaceContextType | undefined>(undefined)
+
+const normalizePurchaseRequest = (request: any, chatIdOverride?: string | null): PurchaseRequest => ({
+  id: request.id,
+  productId: request.productId ?? request.product_id,
+  product: request.product,
+  buyerId: request.buyerId ?? request.buyer_id,
+  buyer: request.buyer,
+  sellerId: request.sellerId ?? request.seller_id,
+  seller: request.seller,
+  status: request.status,
+  createdAt: request.createdAt ?? request.created_at,
+  updatedAt: request.updatedAt ?? request.updated_at,
+  chatId: chatIdOverride ?? request.chatId ?? request.chat_id ?? null,
+})
 
 function useLocalStorage<T>(key: string, initial: T) {
   const [state, setState] = useState<T>(initial)
@@ -108,37 +122,16 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData()
   }, [])
 
-  const addProduct = async (p: Omit<Product, 'id' | 'postedAt'>) => {
+  const addProduct = async (formData: FormData) => {
     try {
-      let currentUser = user
-      
-      // Ensure we have a valid seller ID
-      if (!currentUser || !currentUser.id.includes('-')) {
-        // Create a new user first if needed
-        const newUser = await usersAPI.create({ 
-          name: currentUser?.name || 'Anonymous User',
-          email: currentUser?.email || 'user@example.com'
-        })
-        currentUser = { ...currentUser, id: newUser.data.id, name: currentUser?.name || 'Anonymous User' } as UserType
-        setUser(currentUser)
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser))
-      }
-      
-      const productData = { ...p, sellerId: currentUser.id }
-      const response = await productsAPI.create(productData)
+      const response = await productsAPI.create(formData)
       const newProduct = response.data
       setProducts((s) => [newProduct, ...s])
       return newProduct
     } catch (error) {
       console.error('Failed to create product:', error)
-      
-      // Show error alert to user - simple alert for now since toast system needs more setup
-      alert('❌ Sorry, we got some error creating your product. Please try again.')
-      
-      // Fallback to local creation
-      const prod: Product = { ...p, id: uid('p'), postedAt: nowIso(), status: 'available' }
-      setProducts((s) => [prod, ...s])
-      return prod
+      alert(typeof error === 'string' ? error : 'Failed to create product. Please try again.')
+      throw error
     }
   }
 
@@ -235,6 +228,15 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
+  const refreshProducts = useCallback(async () => {
+    try {
+      const response = await productsAPI.getAll()
+      setProducts(response.data)
+    } catch (error) {
+      console.error('Failed to refresh products:', error)
+    }
+  }, [])
+
   useEffect(() => {
     if (!isHydrated) return
     const interval = window.setInterval(() => {
@@ -243,6 +245,15 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
     return () => window.clearInterval(interval)
   }, [isHydrated, refreshChats])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    const interval = window.setInterval(() => {
+      refreshProducts()
+    }, 60000)
+
+    return () => window.clearInterval(interval)
+  }, [isHydrated, refreshProducts])
 
   const toggleFavorite = async (productId: string) => {
     if (!user || !user.id.includes('-')) {
@@ -267,18 +278,47 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const createPurchaseRequest = async (productId: string, buyerId: string, sellerId: string) => {
+  const createPurchaseRequest = async (productId: string) => {
+    if (!user?.id) {
+      throw new Error('User must be logged in to request a product')
+    }
+
     try {
-      const response = await purchaseRequestsAPI.create({ product_id: productId, buyer_id: buyerId, seller_id: sellerId })
-      const newRequest = response.data
-      setPurchaseRequests((s) => [newRequest, ...s])
-      return newRequest
+      const response = await purchaseRequestsAPI.create({ product_id: productId })
+      const { request, chat_id } = response.data
+      const normalizedRequest: PurchaseRequest = { ...request, chatId: chat_id }
+
+      setPurchaseRequests((prev) => {
+        const exists = prev.findIndex((r) => r.id === normalizedRequest.id)
+        if (exists >= 0) {
+          const next = [...prev]
+          next[exists] = normalizedRequest
+          return next
+        }
+        return [normalizedRequest, ...prev]
+      })
+
+      if (chat_id) {
+        refreshChat(chat_id)
+      }
+
+      return { request: normalizedRequest, chatId: chat_id }
     } catch (error) {
       console.error('Failed to create purchase request:', error)
       // Fallback to local creation
-      const request: PurchaseRequest = { id: uid('pr'), productId, buyerId, sellerId, status: 'pending', createdAt: nowIso() }
-      setPurchaseRequests((s) => [request, ...s])
-      return request
+      const fallbackRequest: PurchaseRequest = {
+        id: uid('pr'),
+        productId,
+        buyerId: user.id,
+        sellerId: products.find((p) => p.id === productId)?.sellerId || '',
+        status: 'pending',
+        createdAt: nowIso(),
+        chatId: null,
+      }
+      setPurchaseRequests((s) => [fallbackRequest, ...s])
+
+      const existingChat = chats.find((c) => c.productId === productId)
+      return { request: fallbackRequest, chatId: existingChat?.id || null }
     }
   }
 

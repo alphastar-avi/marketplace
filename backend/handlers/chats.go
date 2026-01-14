@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
@@ -12,24 +13,11 @@ import (
 
 func preloadChatRelations(db *gorm.DB) *gorm.DB {
 	return db.Preload("Product").
-		Preload("Product.Seller").
+		Preload("Product.Seller").``
 		Preload("Participants").
 		Preload("Messages", func(tx *gorm.DB) *gorm.DB {
 			return tx.Preload("From").Order("created_at ASC")
 		})
-}
-
-func userFromContext(c *gin.Context) (uuid.UUID, bool) {
-	userIDValue, exists := c.Get("userID")
-	if !exists {
-		return uuid.Nil, false
-	}
-
-	userID, ok := userIDValue.(uuid.UUID)
-	if !ok {
-		return uuid.Nil, false
-	}
-	return userID, true
 }
 
 func userInChat(chat *models.Chat, userID uuid.UUID) bool {
@@ -39,6 +27,82 @@ func userInChat(chat *models.Chat, userID uuid.UUID) bool {
 		}
 	}
 	return false
+}
+
+func participantsMatch(participants []models.User, participantIDs []uuid.UUID) bool {
+	if len(participants) != len(participantIDs) {
+		return false
+	}
+
+	idSet := make(map[uuid.UUID]int, len(participantIDs))
+	for _, id := range participantIDs {
+		idSet[id]++
+	}
+
+	for _, participant := range participants {
+		count, ok := idSet[participant.ID]
+		if !ok || count == 0 {
+			return false
+		}
+		idSet[participant.ID]--
+		if idSet[participant.ID] == 0 {
+			delete(idSet, participant.ID)
+		}
+	}
+
+	return len(idSet) == 0
+}
+
+func findChatByParticipants(productID uuid.UUID, participantIDs []uuid.UUID) (*models.Chat, error) {
+	var chats []models.Chat
+	if err := config.DB.Preload("Participants").
+		Where("product_id = ?", productID).
+		Find(&chats).Error; err != nil {
+		return nil, err
+	}
+
+	for _, chat := range chats {
+		if participantsMatch(chat.Participants, participantIDs) {
+			preloadChatRelations(config.DB).First(&chat, chat.ID)
+			return &chat, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func ensureChatForProduct(product models.Product, participantIDs []uuid.UUID) (*models.Chat, bool, error) {
+	existing, err := findChatByParticipants(product.ID, participantIDs)
+	if err != nil {
+		return nil, false, err
+	}
+	if existing != nil {
+		return existing, false, nil
+	}
+
+	var participants []models.User
+	if err := config.DB.Find(&participants, participantIDs).Error; err != nil {
+		return nil, false, err
+	}
+	if len(participants) != len(participantIDs) {
+		return nil, false, errors.New("invalid participants")
+	}
+
+	chat := models.Chat{
+		ProductID: product.ID,
+		CollegeID: product.CollegeID,
+	}
+
+	if err := config.DB.Create(&chat).Error; err != nil {
+		return nil, false, err
+	}
+
+	if err := config.DB.Model(&chat).Association("Participants").Append(participants); err != nil {
+		return nil, false, err
+	}
+
+	preloadChatRelations(config.DB).First(&chat, chat.ID)
+	return &chat, true, nil
 }
 
 // GetChats returns all chats for a user (college-filtered)
@@ -131,60 +195,18 @@ func CreateChat(c *gin.Context) {
 		return
 	}
 
-	// Get participants
-	var participants []models.User
-	if err := config.DB.Find(&participants, requestData.Participants).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid participants"})
-		return
-	}
-
-	// Check if chat already exists for this product and same participants
-	var existingChats []models.Chat
-	config.DB.
-		Preload("Participants").
-		Where("product_id = ?", requestData.ProductID).
-		Find(&existingChats)
-	for _, existing := range existingChats {
-		if len(existing.Participants) != len(requestData.Participants) {
-			continue
-		}
-		matchCount := 0
-		for _, p := range existing.Participants {
-			for _, reqID := range requestData.Participants {
-				if p.ID == reqID {
-					matchCount++
-					break
-				}
-			}
-		}
-		if matchCount == len(requestData.Participants) {
-			preloadChatRelations(config.DB).First(&existing, existing.ID)
-			c.JSON(http.StatusOK, existing)
-			return
-		}
-	}
-
-	chat := models.Chat{
-		ProductID: requestData.ProductID,
-		CollegeID: product.CollegeID,
-	}
-
-	result := config.DB.Create(&chat)
-	if result.Error != nil {
+	chat, created, err := ensureChatForProduct(product, requestData.Participants)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat"})
 		return
 	}
 
-	// Add participants to chat
-	if err := config.DB.Model(&chat).Association("Participants").Append(participants); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add participants"})
+	if created {
+		c.JSON(http.StatusCreated, chat)
 		return
 	}
 
-	// Preload relationships for response
-	preloadChatRelations(config.DB).First(&chat, chat.ID)
-
-	c.JSON(http.StatusCreated, chat)
+	c.JSON(http.StatusOK, chat)
 }
 
 // GetChatMessages returns messages for a specific chat
