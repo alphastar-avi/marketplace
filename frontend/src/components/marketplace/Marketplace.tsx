@@ -22,7 +22,12 @@ export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: strin
     
     if (!q) return setFiltered(otherUsersProducts)
     if (!otherUsersProducts.length) return setFiltered([])
-    setFiltered(otherUsersProducts.filter((p: Product) => (p.title + ' ' + p.description + ' ' + p.tags.join(' ')).toLowerCase().includes(q)))
+    setFiltered(
+      otherUsersProducts.filter((p: Product) => {
+        const tagText = Array.isArray(p.tags) ? p.tags.join(' ') : ''
+        return (p.title + ' ' + p.description + ' ' + tagText).toLowerCase().includes(q)
+      })
+    )
   }, [query, products, user?.id])
 
   // Removed dummy product creation that was interfering with real data
