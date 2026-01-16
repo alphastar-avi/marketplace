@@ -10,9 +10,6 @@ console.log('🔍 Final API_BASE_URL:', API_BASE_URL)
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Request interceptor to add auth token
@@ -24,7 +21,18 @@ api.interceptors.request.use(
     }
     // Remove Content-Type header for FormData - let browser set it with boundary
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type']
+      // Handle AxiosHeaders object correctly
+      if (config.headers) {
+        // Nuke it from orbit
+        config.headers['Content-Type'] = undefined;
+        // Also try standard delete for good measure
+        if (typeof config.headers.delete === 'function') {
+          config.headers.delete('Content-Type');
+        }
+        delete config.headers['Content-Type'];
+      }
+
+      console.log('🔍 Request Headers after update:', config.headers);
     }
     return config
   },

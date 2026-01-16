@@ -3,10 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
 	"marketplace-backend/storage"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 // GetProducts returns all products for a college
 func GetProducts(c *gin.Context) {
 	var products []models.Product
-	
+
 	// For now, get all products (later filter by college)
 	result := config.DB.Preload("Seller").Preload("College").Find(&products)
 	if result.Error != nil {
@@ -70,7 +70,7 @@ func CreateProduct(c *gin.Context) {
 
 	// Parse the multipart form
 	if err := c.Request.ParseMultipartForm(32 << 20); err != nil { // 32 MB max memory
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Failed to parse form data: %v", err)})
 		return
 	}
 
@@ -114,7 +114,7 @@ func CreateProduct(c *gin.Context) {
 	// Handle file uploads
 	form, _ := c.MultipartForm()
 	files := form.File["images"]
-	var imageURLs []string
+	imageURLs := []string{}
 
 	if len(files) > 0 {
 		// Initialize Azure Blob Storage client

@@ -90,10 +90,16 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             <div className="rounded-xl overflow-hidden bg-black/20">
-              <img src={prod.images[mainIndex]} className="w-full h-[420px] object-cover" />
+              {prod.images && prod.images.length > 0 ? (
+                <img src={prod.images[mainIndex]} className="w-full h-[420px] object-cover" />
+              ) : (
+                <div className="w-full h-[420px] flex items-center justify-center bg-white/5 text-white/40">
+                  No images available
+                </div>
+              )}
             </div>
             <div className="mt-3 grid grid-cols-4 gap-2">
-              {prod.images.map((img, i) => (
+              {prod.images?.map((img, i) => (
                 <img
                   key={i}
                   src={img}

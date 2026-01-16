@@ -23,17 +23,17 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
 
   const onDrop = (files: FileList | null) => {
     if (!files) return
-    
+
     // Calculate how many more files we can add (max 6 total)
     const remainingSlots = 6 - imageFiles.length
     if (remainingSlots <= 0) {
       alert('You can upload up to 6 images')
       return
     }
-    
+
     const newImages: string[] = []
     const newFiles: File[] = []
-    
+
     // Only process up to the remaining slots
     Array.from(files).slice(0, remainingSlots).forEach((file) => {
       // Validate file type
@@ -41,13 +41,13 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
         alert(`File ${file.name} is not an image`)
         return
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert(`File ${file.name} is too large. Maximum size is 5MB.`)
         return
       }
-      
+
       const reader = new FileReader()
       reader.onload = (e) => {
         newImages.push(e.target?.result as string)
@@ -58,7 +58,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       reader.readAsDataURL(file)
       newFiles.push(file)
     })
-    
+
     setImageFiles((s) => [...s, ...newFiles])
   }
 
@@ -85,7 +85,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       const formData = new FormData()
       formData.append('title', title)
       formData.append('category', category)
-      
+
       // Add image files
       imageFiles.forEach((file) => {
         formData.append('images', file)
@@ -96,10 +96,10 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       const processingTime = Date.now() - startTime
 
       setDesc(response.data.description)
-      
+
       // Show alert with model and processing time
-      const modelInfo = response.data.model === 'gemini-2.0-flash' 
-        ? 'Generated with Gemini AI' 
+      const modelInfo = response.data.model === 'gemini-2.0-flash'
+        ? 'Generated with Gemini AI'
         : 'Generated with template (Gemini API not configured)'
       alert(`${modelInfo}\nProcessing time: ${response.data.processing_time_ms}ms`)
     } catch (error: any) {
@@ -112,12 +112,12 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
 
   const submit = async () => {
     if (!title || !price || imageFiles.length === 0) return alert('Please enter title, price and upload at least one image')
-    
+
     setLoading(true)
-    
+
     try {
       const formData = new FormData()
-      
+
       // Add all form fields to FormData
       formData.append('title', title)
       formData.append('price', price.toString())
@@ -125,30 +125,35 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       formData.append('condition', condition)
       formData.append('category', category)
       formData.append('tags', JSON.stringify(tags))
-      
+
       // Add user ID if available
       if (user?.id) {
         formData.append('sellerId', user.id)
       }
-      
+
       // Add all image files
       imageFiles.forEach((file) => {
         formData.append('images', file)
       })
-      
+
+      // Log FormData entries for debugging
+      for (const pair of formData.entries()) {
+        console.log('FormData Entry:', pair[0], pair[1])
+      }
+
       // Call the API with FormData
       const response = await productsAPI.create(formData)
-      
+
       // Update the local state with the new product
-      const productImages = Array.isArray(response.data.images) 
-        ? response.data.images 
+      const productImages = Array.isArray(response.data.images)
+        ? response.data.images
         : JSON.parse(response.data.images || '[]')
-      
+
       addProduct({
         ...response.data,
         images: productImages,
       })
-      
+
       // Reset form
       setTitle('')
       setPrice(0)
@@ -156,7 +161,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       setTags([])
       setImages([])
       setImageFiles([])
-      
+
       // Close the form
       onDone()
     } catch (error) {
@@ -234,9 +239,9 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
                 <label className="text-sm font-semibold">Description</label>
                 <div className="mt-2 flex gap-2">
                   <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} className="flex-1 p-2 bg-transparent border rounded-md" disabled={generating} />
-                  <button 
-                    onClick={generateDesc} 
-                    className="p-3 rounded-md bg-white/6" 
+                  <button
+                    onClick={generateDesc}
+                    className="p-3 rounded-md bg-white/6"
                     title="AI assist"
                     disabled={generating || !title || imageFiles.length === 0}
                   >
