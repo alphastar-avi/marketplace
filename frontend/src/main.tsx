@@ -1,9 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import './index.css'
 
-import Home from './routes/Home'
 import MarketplaceRoute from './routes/Marketplace'
 import ProductRoute from './routes/Product'
 import ProfileRoute from './routes/Profile'
@@ -17,7 +16,7 @@ import { MarketplaceProvider } from './state/MarketplaceContext'
 import { ThemeProvider } from './state/ThemeContext'
 
 const router = createBrowserRouter([
-  { path: '/', element: <Home /> },
+  { path: '/', element: <Navigate to="/login" replace /> },
   { path: '/login', element: <Login /> },
   { path: '/signup', element: <Signup /> },
   { path: '/marketplace', element: <MarketplaceRoute /> },
