@@ -3,22 +3,23 @@ package handlers
 import (
 	"encoding/json"
 	"marketplace-backend/models"
+
 	"github.com/google/uuid"
 )
 
 // ProductDTO for API requests/responses with proper array handling
 type ProductDTO struct {
-	ID          string   `json:"id"`
-	Title       string   `json:"title"`
-	Price       float64  `json:"price"`
-	Description string   `json:"description"`
-	Images      []string `json:"images"`
-	Condition   string   `json:"condition"`
-	Category    string   `json:"category"`
-	Tags        []string `json:"tags"`
-	Status      string   `json:"status"`
-	SellerID    string   `json:"sellerId"`
-	PostedAt    string   `json:"postedAt"`
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Price       float64    `json:"price"`
+	Description string     `json:"description"`
+	Images      []string   `json:"images"`
+	Condition   string     `json:"condition"`
+	Category    string     `json:"category"`
+	Tags        []string   `json:"tags"`
+	Status      string     `json:"status"`
+	SellerID    string     `json:"sellerId"`
+	PostedAt    string     `json:"postedAt"`
 	Seller      *SellerDTO `json:"seller,omitempty"`
 }
 
@@ -47,7 +48,7 @@ type CreateProductRequest struct {
 func (dto *ProductDTO) ToModel() (*models.Product, error) {
 	imagesJSON, _ := json.Marshal(dto.Images)
 	tagsJSON, _ := json.Marshal(dto.Tags)
-	
+
 	sellerID, err := uuid.Parse(dto.SellerID)
 	if err != nil {
 		return nil, err
@@ -68,12 +69,12 @@ func (dto *ProductDTO) ToModel() (*models.Product, error) {
 
 // FromModel converts database model to ProductDTO
 func ProductDTOFromModel(product *models.Product) *ProductDTO {
-	var images []string
-	var tags []string
-	
+	images := []string{}
+	tags := []string{}
+
 	json.Unmarshal([]byte(product.Images), &images)
 	json.Unmarshal([]byte(product.Tags), &tags)
-	
+
 	dto := &ProductDTO{
 		ID:          product.ID.String(),
 		Title:       product.Title,
@@ -87,7 +88,7 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 		SellerID:    product.SellerID.String(),
 		PostedAt:    product.CreatedAt.Format("2006-01-02T15:04:05.000Z"),
 	}
-	
+
 	// Include seller information if available
 	if product.Seller.ID != uuid.Nil {
 		dto.Seller = &SellerDTO{
@@ -99,6 +100,6 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 			Avatar:     product.Seller.Avatar,
 		}
 	}
-	
+
 	return dto
 }
