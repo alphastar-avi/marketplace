@@ -5,11 +5,15 @@ import { Product, UserType, Chat, Message, PurchaseRequest } from '../types'
 export const productsAPI = {
   getAll: () => api.get<Product[]>('/products'),
   getById: (id: string) => api.get<Product>(`/products/${id}`),
-  create: (formData: FormData) => api.post<Product>('/products', formData, {
-    headers: {
-      'Content-Type': undefined,
-    } as any, // Type cast to allow undefined usually
-  }),
+  create: (formData: FormData) => {
+    console.log('🚀 productsAPI.create called. Data type:', formData?.constructor?.name);
+    console.trace('Stack trace:');
+    return api.post<Product>('/products', formData, {
+      headers: {
+        'Content-Type': undefined,
+      } as any, // Type cast to allow undefined usually
+    })
+  },
   update: (id: string, formData: FormData) => api.put<Product>(`/products/${id}`, formData, {
     headers: {
       'Content-Type': undefined,

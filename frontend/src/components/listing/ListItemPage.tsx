@@ -7,7 +7,7 @@ import Spinner from '../ui/Spinner'
 import { Product } from '../../types'
 
 export default function ListItemPage({ onDone }: { onDone: () => void }) {
-  const { addProduct, user } = useMarketplace()
+  const { addProduct, setProducts, user } = useMarketplace()
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState(0)
   const [condition, setCondition] = useState<Product['condition']>('Good')
@@ -149,10 +149,13 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
         ? response.data.images
         : JSON.parse(response.data.images || '[]')
 
-      addProduct({
-        ...response.data,
-        images: productImages,
-      })
+      setProducts((prev) => [
+        {
+          ...response.data,
+          images: productImages,
+        },
+        ...prev
+      ])
 
       // Reset form
       setTitle('')
@@ -266,10 +269,15 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
               </div>
 
               <div className="mt-4 flex gap-3">
-                <button onClick={submit} className="py-2 px-4 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400 font-semibold">
+                <button
+                  type="button"
+                  onClick={submit}
+                  disabled={loading}
+                  className={`py-2 px-4 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400 font-semibold ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                >
                   {loading ? <Spinner /> : 'List Item'}
                 </button>
-                <button onClick={onDone} className="py-2 px-4 rounded-md bg-white/6">Cancel</button>
+                <button type="button" onClick={onDone} className="py-2 px-4 rounded-md bg-white/6">Cancel</button>
               </div>
             </GlassCard>
           </div>
