@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
-import { ArrowRight, Chrome } from 'lucide-react'
+import { ArrowRight, Chrome, UserCheck } from 'lucide-react'
 
 export default function Signup() {
   const [formData, setFormData] = useState({
@@ -65,11 +65,9 @@ export default function Signup() {
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex-1 space-y-8">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
-            College Marketplace · Next
-          </span>
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-12 lg:flex-row lg:items-start lg:justify-between lg:py-0">
+        <div className="flex-1 space-y-8 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center">
+
           <h1 className="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
             College Marketplace
           </h1>
@@ -92,7 +90,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <div className="flex-1 lg:max-w-lg">
+        <div className="flex-1 lg:max-w-lg lg:py-24">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-white">Create an account</h2>
@@ -108,12 +106,13 @@ export default function Signup() {
                 className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-indigo-500/70 via-indigo-500/60 to-blue-500/70 px-4 py-3 text-left transition hover:shadow-lg hover:shadow-indigo-500/20"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
-                  <ArrowRight size={18} />
+                  <UserCheck size={18} />
                 </span>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-white">Already have an account?</p>
                   <p className="text-xs text-white/50">Sign in instead</p>
                 </div>
+                <ArrowRight size={16} className="text-white/80" />
               </button>
             </div>
 
