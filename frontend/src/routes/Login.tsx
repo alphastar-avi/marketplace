@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus } from 'lucide-react'
+import Dither from '../components/ui/Dither'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -53,19 +54,23 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#030713] text-white">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#050d24] via-[#030711] to-[#010308]" />
-        {/* Glow Blobs */}
-        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[100px] pointer-events-none" />
-        {/* Noise Texture */}
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+      <div className="absolute inset-0 z-0 opacity-50">
+        <Dither
+          waveColor={[0.5, 0.5, 0.5]}
+          disableAnimation={false}
+          enableMouseInteraction={true}
+          mouseRadius={0.3}
+          colorNum={4}
+          waveAmplitude={0.3}
+          waveFrequency={3}
+          waveSpeed={0.05}
+        />
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-12 lg:flex-row lg:items-start lg:justify-between lg:py-0">
         <div className="flex-1 space-y-8 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center">
 
-          <h1 className="text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-5xl font-black leading-tight text-white sm:text-6xl lg:text-7xl">
             College Marketplace
           </h1>
           <p className="text-lg text-white/70 sm:text-xl">
