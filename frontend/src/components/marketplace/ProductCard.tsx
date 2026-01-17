@@ -5,6 +5,8 @@ import { Product } from '../../types'
 
 export default function ProductCard({ product, isFavorited, onToggleFavorite, isAdmin, onDeleteProduct }: { product: Product; isFavorited: boolean; onToggleFavorite: () => void; isAdmin?: boolean; onDeleteProduct?: () => void }) {
   const navigate = useNavigate()
+  const sellerName = product?.seller?.name || 'Unknown Seller'
+  const sellerInitial = product?.seller?.name?.charAt(0)?.toUpperCase() || sellerName.charAt(0)
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`)
@@ -47,8 +49,10 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
       </div>
       <div className="flex items-center justify-between text-xs opacity-80">
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-white/10 grid place-items-center text-xs">S</div>
-          <div>Seller</div>
+          <div className="h-7 w-7 rounded-full bg-white/10 grid place-items-center text-xs font-semibold">
+            {sellerInitial}
+          </div>
+          <div className="text-sm font-medium">{sellerName}</div>
         </div>
         <div className="flex items-center gap-2">
           <button
