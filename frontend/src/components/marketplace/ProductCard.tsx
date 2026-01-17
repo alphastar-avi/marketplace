@@ -1,14 +1,10 @@
 import { motion } from 'framer-motion'
-import { Heart, Share2, Trash2 } from 'lucide-react'
+import { Heart, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useState, useRef } from 'react'
-import ShareDropdown from '../ui/ShareDropdown'
 import { Product } from '../../types'
 
 export default function ProductCard({ product, isFavorited, onToggleFavorite, isAdmin, onDeleteProduct }: { product: Product; isFavorited: boolean; onToggleFavorite: () => void; isAdmin?: boolean; onDeleteProduct?: () => void }) {
   const navigate = useNavigate()
-  const [isShareOpen, setIsShareOpen] = useState(false)
-  const shareButtonRef = useRef<HTMLButtonElement | null>(null)
 
   const handleProductClick = () => {
     navigate(`/product/${product.id}`)
@@ -18,13 +14,6 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
     e.stopPropagation()
     onToggleFavorite()
   }
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setIsShareOpen(!isShareOpen)
-  }
-
-  const productUrl = `${window.location.origin}/product/${product.id}`
 
   return (
     <motion.div
@@ -68,22 +57,6 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
           >
             <Heart size={14} fill={isFavorited ? 'currentColor' : 'none'} />
           </button>
-          <div className="relative">
-            <button
-              ref={shareButtonRef}
-              onClick={handleShareClick}
-              className="p-1 rounded-md hover:text-blue-400 transition-colors"
-            >
-              <Share2 size={14} />
-            </button>
-            <ShareDropdown
-              productUrl={productUrl}
-              productTitle={product.title}
-              isOpen={isShareOpen}
-              onClose={() => setIsShareOpen(false)}
-              triggerRef={shareButtonRef}
-            />
-          </div>
         </div>
       </div>
 
