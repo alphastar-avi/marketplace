@@ -65,6 +65,16 @@ func SetupRoutes(r *gin.Engine) {
 			requests.PUT("/:id", handlers.UpdatePurchaseRequest)
 		}
 
+		// Carpool routes
+		carpools := api.Group("/carpools")
+		{
+			carpools.GET("", middleware.AuthMiddleware(), handlers.GetCarpoolRides)
+			carpools.POST("", middleware.AuthMiddleware(), handlers.CreateCarpoolRide)
+			carpools.GET("/:id", middleware.AuthMiddleware(), handlers.GetCarpoolRide)
+			carpools.POST("/:id/requests", middleware.AuthMiddleware(), handlers.CreateCarpoolJoinRequest)
+			carpools.PUT("/requests/:id", middleware.AuthMiddleware(), handlers.UpdateCarpoolJoinRequest)
+		}
+
 		// Favorites routes
 		favorites := api.Group("/favorites")
 		{
