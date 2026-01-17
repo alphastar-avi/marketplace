@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
+	"marketplace-backend/storage"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -82,13 +83,67 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Check Content-Type to determine if this is a multipart request
+	contentType := c.GetHeader("Content-Type")
+
 	var updateData models.User
-	if err := c.ShouldBindJSON(&updateData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	var avatarURL string
+
+	if len(contentType) > 0 && contentType[:9] == "multipart" {
+		// Handle multipart/form-data
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10 MB limit
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
+			return
+		}
+
+		// Update text fields
+		updateData.Name = c.PostForm("name")
+		updateData.Year = c.PostForm("year")
+		updateData.Department = c.PostForm("department")
+
+		// Handle file upload
+		file, header, err := c.Request.FormFile("avatar")
+		if err == nil {
+			defer file.Close()
+
+			// Initialize Azure Blob Storage
+			blobStorage, err := storage.NewAzureBlobStorage()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize storage"})
+				return
+			}
+
+			// Upload file
+			avatarURL, err = blobStorage.UploadFile(header, "avatars")
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload avatar"})
+				return
+			}
+			updateData.Avatar = avatarURL
+		}
+	} else {
+		// Handle JSON (legacy support or if no image being uploaded, though frontend will switch to FormData)
+		if err := c.ShouldBindJSON(&updateData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
-	result = config.DB.Model(&user).Updates(updateData)
+	updates := map[string]interface{}{}
+	if updateData.Name != "" {
+		updates["name"] = updateData.Name
+	}
+	if updateData.Year != "" {
+		updates["year"] = updateData.Year
+	}
+	if updateData.Department != "" {
+		updates["department"] = updateData.Department
+	}
+	if updateData.Avatar != "" {
+		updates["avatar"] = updateData.Avatar
+	}
+
+	result = config.DB.Model(&user).Updates(updates)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 		return
