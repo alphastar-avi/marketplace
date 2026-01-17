@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, X } from 'lucide-react'
+import { ArrowLeft, X, Sparkles } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 import { productsAPI } from '../../api/services'
 import GlassCard from '../ui/GlassCard'
@@ -9,9 +9,9 @@ import { Product } from '../../types'
 export default function ListItemPage({ onDone }: { onDone: () => void }) {
   const { addProduct, setProducts, user } = useMarketplace()
   const [title, setTitle] = useState('')
-  const [price, setPrice] = useState(0)
+  const [price, setPrice] = useState<number | ''>('')
   const [condition, setCondition] = useState<Product['condition']>('Good')
-  const [category, setCategory] = useState('Books')
+  const [category, setCategory] = useState('')
   const [desc, setDesc] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
@@ -188,10 +188,9 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
         <h1 className="ml-4 text-2xl font-bold text-white">List New Item</h1>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-4">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-6">
+          <div className="space-y-4">
             <GlassCard>
               <div>
                 <label className="block text-sm font-semibold">Images</label>
@@ -224,16 +223,26 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-semibold">Price (₹)</label>
-                  <input type="number" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="w-full mt-2 p-2 bg-transparent border rounded-md" />
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full mt-2 p-2 bg-transparent border rounded-md h-[42px]"
+                    placeholder=""
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-semibold">Condition</label>
-                  <select value={condition} onChange={(e) => setCondition(e.target.value as Product['condition'])} className="w-full mt-2 p-2 bg-transparent border rounded-md">
-                    <option>New</option>
-                    <option>Like New</option>
-                    <option>Good</option>
-                    <option>Fair</option>
-                    <option>For Parts</option>
+                  <select
+                    value={condition}
+                    onChange={(e) => setCondition(e.target.value as Product['condition'])}
+                    className="w-full mt-2 p-2 bg-transparent border rounded-md h-[42px]"
+                  >
+                    <option className="bg-[#0f172a]">New</option>
+                    <option className="bg-[#0f172a]">Like New</option>
+                    <option className="bg-[#0f172a]">Good</option>
+                    <option className="bg-[#0f172a]">Fair</option>
+                    <option className="bg-[#0f172a]">For Parts</option>
                   </select>
                 </div>
               </div>
@@ -244,16 +253,26 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
               </div>
 
               <div className="mt-3">
-                <label className="text-sm font-semibold">Description</label>
-                <div className="mt-2 flex gap-2">
-                  <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} className="flex-1 p-2 bg-transparent border rounded-md" disabled={generating} />
+                <label className="text-sm font-semibold mb-1 block">Description</label>
+                <div className="flex gap-3 h-32">
+                  <textarea
+                    value={desc}
+                    onChange={(e) => setDesc(e.target.value)}
+                    className="flex-1 h-full p-4 bg-[#0B1221] border border-white/20 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none text-white placeholder:text-white/30"
+                    placeholder="Enter description or click Enhance Description to generate one..."
+                    disabled={generating}
+                  />
                   <button
                     onClick={generateDesc}
-                    className="p-3 rounded-md bg-white/6"
-                    title="AI assist"
+                    className="w-24 h-full rounded-xl bg-[#1E2536] hover:bg-[#252b3d] text-white/60 hover:text-white flex flex-col items-center justify-center gap-2 transition-all duration-200 border border-white/5 hover:border-white/20 shadow-lg hover:shadow-xl shadow-black/20 group px-2 text-center"
+                    title="Generate with AI"
                     disabled={generating || !title || imageFiles.length === 0}
                   >
-                    {generating ? <Spinner /> : 'AI'}
+                    {generating ? (
+                      <Spinner />
+                    ) : (
+                      <span className="text-sm font-medium leading-tight">Enhance Description</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -273,43 +292,79 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
                 </div>
               </div>
 
-              <div className="mt-4 flex gap-3">
+              <div className="mt-6 flex gap-3">
                 <button
                   type="button"
                   onClick={submit}
                   disabled={loading}
-                  className={`py-2 px-4 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400 font-semibold ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                  className={`flex-1 py-3 px-4 rounded-xl bg-gradient-to-br from-[#a7b7ff] via-[#8aa5ff] to-[#6a7dff] hover:from-[#96a9ff] hover:via-[#7b98ff] hover:to-[#5a6eff] text-slate-950 font-bold shadow-[0_12px_28px_rgba(5,8,20,0.4)] hover:shadow-[0_15px_35px_rgba(5,8,20,0.5)] transition-all duration-200 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
                   {loading ? <Spinner /> : 'List Item'}
                 </button>
-                <button type="button" onClick={onDone} className="py-2 px-4 rounded-md bg-white/6">Cancel</button>
+                <button type="button" onClick={onDone} className="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-medium transition-colors">Cancel</button>
               </div>
             </GlassCard>
           </div>
 
           <div className="space-y-4">
-            <GlassCard>
-              <div className="text-sm font-semibold">Preview</div>
-              <div className="mt-2">
-                <div className="h-40 rounded-md overflow-hidden bg-black/10 grid place-items-center">
-                  {images[0] ? <img src={images[0]} className="w-full h-full object-cover" /> : <div className="opacity-60">No image yet</div>}
+            <div className="h-[70vh] flex flex-col">
+              <GlassCard className="h-full flex flex-col">
+                <div className="text-sm font-semibold mb-4">Preview</div>
+                <div className="flex-1 bg-black/20 rounded-xl overflow-hidden relative group">
+                  {/* Phone Frame / Preview Container */}
+                  <div className="absolute inset-0 flex flex-col overflow-y-auto custom-scrollbar">
+                    <div className="h-[26.6rem] aspect-[3/4] w-auto mx-auto relative bg-black/40 flex-shrink-0">
+                      {images[0] ? (
+                        <img src={images[0]} className="w-full h-full object-cover" alt="Preview" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-white/20 flex-col gap-2">
+                          <div className="w-16 h-16 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
+                            <span className="text-2xl">+</span>
+                          </div>
+                          <span>No image</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <h3 className="text-xl font-bold text-white truncate">{title || 'Item Title'}</h3>
+                        <p className="text-indigo-400 font-semibold mt-1">₹{price || ''}</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white/5 backdrop-blur-sm border-t border-white/10 flex-1">
+                      <p className="text-sm text-white/70 whitespace-pre-wrap">{desc || 'Description will appear here...'}</p>
+                      <div className="flex gap-2 mt-3 flex-wrap">
+                        {tags.length > 0 ? tags.map(t => (
+                          <span key={t} className="text-xs px-2 py-1 rounded-full bg-white/10 text-white/60">#{t}</span>
+                        )) : (
+                          <span className="text-xs px-2 py-1 rounded-full bg-white/5 text-white/20">#tags</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-2 font-semibold">{title || 'Item Title'}</div>
-                <div className="text-sm opacity-70">₹{price || '0'}</div>
-                <div className="text-xs opacity-60 mt-2">{desc || 'Short description will appear here.'}</div>
-              </div>
-            </GlassCard>
+              </GlassCard>
+            </div>
 
             <GlassCard>
-              <div className="text-sm">Tips</div>
-              <ul className="mt-2 text-xs opacity-80">
-                <li>• Use clear photos and an accurate price.</li>
-                <li>• Mention pickup location in description.</li>
+              <div className="text-sm font-semibold text-indigo-400 mb-2">Selling Tips</div>
+              <ul className="space-y-2 text-xs text-white/60">
+                <li className="flex items-start gap-2">
+                  <span className="text-indigo-400">•</span>
+                  Use good lighting for photos
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-indigo-400">•</span>
+                  Be honest about condition
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-indigo-400">•</span>
+                  Check similar items for pricing
+                </li>
               </ul>
             </GlassCard>
           </div>
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   )
 }
