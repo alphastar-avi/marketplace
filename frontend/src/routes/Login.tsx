@@ -55,8 +55,11 @@ export default function Login() {
     <div className="relative min-h-screen overflow-hidden bg-[#030713] text-white">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#050d24] via-[#030711] to-[#010308]" />
-        <div className="absolute -top-24 -right-32 h-80 w-80 rounded-full bg-[#3c5dfa]/20 blur-[120px]" />
-        <div className="absolute -bottom-16 -left-24 h-72 w-72 rounded-full bg-[#14b3ff]/10 blur-[140px]" />
+        {/* Glow Blobs */}
+        <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-violet-500/10 rounded-full blur-[100px] pointer-events-none" />
+        {/* Noise Texture */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-16 lg:flex-row lg:items-center lg:justify-between">
