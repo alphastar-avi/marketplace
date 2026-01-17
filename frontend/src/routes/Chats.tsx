@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMarketplace } from '../state/MarketplaceContext'
+import { Link } from 'react-router-dom'
 import ChatsList from '../components/chat/ChatsList'
 import ChatInterface from '../components/chat/ChatInterface'
-import Header from '../components/marketplace/Header'
 
 export default function ChatsRoute() {
   const { user } = useMarketplace()
@@ -21,12 +21,20 @@ export default function ChatsRoute() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#081028] to-[#04101f]">
-      <Header query="" setQuery={() => {}} />
-      
-      <div className="flex h-[calc(100vh-80px)]">
+      {/* Back Arrow Header */}
+      <div className="h-16 px-4 flex items-center border-b border-white/10">
+        <Link to="/marketplace" className="p-2 -ml-2 text-white/60 hover:text-white transition-colors">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </Link>
+        <h1 className="ml-4 text-2xl font-bold text-white">Chats</h1>
+      </div>
+
+      <div className="flex h-[calc(100vh-64px)]">
         {/* Chat List Sidebar */}
         <div className="w-full md:w-96 border-r border-white/10">
-          <ChatsList 
+          <ChatsList
             selectedChatId={selectedChatId}
             onSelectChat={setSelectedChatId}
           />
@@ -35,7 +43,7 @@ export default function ChatsRoute() {
         {/* Chat Interface */}
         <div className="hidden md:flex flex-1">
           {selectedChatId ? (
-            <ChatInterface 
+            <ChatInterface
               chatId={selectedChatId}
               onClose={() => setSelectedChatId(null)}
             />
@@ -58,7 +66,7 @@ export default function ChatsRoute() {
       {/* Mobile Chat Interface Overlay */}
       {selectedChatId && (
         <div className="md:hidden fixed inset-0 z-50">
-          <ChatInterface 
+          <ChatInterface
             chatId={selectedChatId}
             onClose={() => setSelectedChatId(null)}
             isMobile={true}
