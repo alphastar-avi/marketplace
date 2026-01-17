@@ -35,7 +35,14 @@ export const productsAPI = {
 export const usersAPI = {
   getById: (id: string) => api.get<UserType>(`/users/${id}`),
   create: (user: Omit<UserType, 'id'>) => api.post<UserType>('/users', user),
-  update: (id: string, user: Partial<UserType>) => api.put<UserType>(`/users/${id}`, user),
+  update: (id: string, user: Partial<UserType> | FormData) => {
+    if (user instanceof FormData) {
+      return api.put<UserType>(`/users/${id}`, user, {
+        headers: { 'Content-Type': undefined } as any
+      })
+    }
+    return api.put<UserType>(`/users/${id}`, user)
+  },
 }
 
 // Chats API
