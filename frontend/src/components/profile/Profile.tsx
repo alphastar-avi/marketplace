@@ -5,7 +5,7 @@ import { Product } from '../../types'
 import GlassCard from '../ui/GlassCard'
 
 export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenChat: (c: string) => void; onBack: () => void; onViewProduct: (productId: string) => void }) {
-  const { user, updateUser, setUser, products, chats, favorites } = useMarketplace()
+  const { user, updateUser, setUser, products, favorites } = useMarketplace()
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState<'listings' | 'favorites'>('listings')
   const [name, setName] = useState(user?.name || '')
@@ -93,24 +93,6 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                     </button>
                   </div>
                 )}
-              </div>
-            </GlassCard>
-
-            <GlassCard className="mt-4">
-              <div className="text-sm font-semibold">Active Chats</div>
-              <div className="mt-3 space-y-2">
-                {chats.map((c) => (
-                  <div key={c.id} className="p-2 rounded-md bg-white/4 flex items-center justify-between cursor-pointer" onClick={() => onOpenChat(c.id)}>
-                    <div className="flex gap-3 items-center">
-                      <div className="h-10 w-10 rounded-md bg-white/6 grid place-items-center">P</div>
-                      <div>
-                        <div className="font-semibold">Chat for {products.find((p: Product) => p.id === c.productId)?.title}</div>
-                        <div className="text-xs opacity-70">{c.messages[c.messages.length - 1]?.text?.slice(0, 40) || 'No messages yet'}</div>
-                      </div>
-                    </div>
-                    <div className="text-xs opacity-60">{c.messages.length ? new Date(c.messages[c.messages.length - 1].at).toLocaleTimeString() : '-'}</div>
-                  </div>
-                ))}
               </div>
             </GlassCard>
           </div>
