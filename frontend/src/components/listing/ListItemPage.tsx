@@ -176,14 +176,19 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-4xl mx-auto px-4 md:px-8">
-        <div className="flex items-center gap-4 mb-6">
-          <button onClick={onDone} className="p-2 rounded-full bg-white/6">
-            <ArrowLeft />
-          </button>
-          <h2 className="text-2xl font-bold">List New Item</h2>
-        </div>
+    <div className="min-h-screen">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-30 h-16 px-4 md:px-8 flex items-center border-b border-white/10 bg-[#0f172a]/80 backdrop-blur-md">
+        <button
+          onClick={onDone}
+          className="p-2 -ml-2 text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/5"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+        <h1 className="ml-4 text-2xl font-bold text-white">List New Item</h1>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
