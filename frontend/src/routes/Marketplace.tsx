@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import Marketplace from '../components/marketplace/Marketplace'
 import ChatPage from '../components/chat/ChatPage'
+import FloatingBottomNav from '../components/navigation/FloatingBottomNav'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function MarketplaceRoute() {
@@ -37,8 +38,7 @@ export default function MarketplaceRoute() {
         <Marketplace onOpenChat={openChat} />
       </motion.div>
       <AnimatePresence>{activeChat && <ChatPage chatId={activeChat} onClose={closeChat} />}</AnimatePresence>
+      <FloatingBottomNav />
     </div>
   )
 }
-
-
