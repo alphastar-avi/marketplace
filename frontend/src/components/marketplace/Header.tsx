@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Search, User } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 import { useNavigate } from 'react-router-dom'
@@ -7,19 +7,39 @@ export default function Header({ query, setQuery }: { query: string; setQuery: (
   const headerRef = useRef<HTMLDivElement | null>(null)
   const { setUser } = useMarketplace()
   const navigate = useNavigate()
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
 
   useEffect(() => {
     const onScroll = () => {
-      if (!headerRef.current) return
-      const y = window.scrollY
-      headerRef.current!.style.backdropFilter = `blur(${Math.min(12, y / 30)}px)`
+      const currentScrollY = window.scrollY
+
+      // Show header if scrolling up or at the top
+      if (currentScrollY < lastScrollY || currentScrollY < 50) {
+        setIsVisible(true)
+      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Hide header if scrolling down and past threshold
+        setIsVisible(false)
+      }
+
+      setLastScrollY(currentScrollY)
+
+      if (headerRef.current) {
+        headerRef.current.style.backdropFilter = `blur(${Math.min(12, currentScrollY / 30)}px)`
+      }
     }
+
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [lastScrollY])
 
   return (
-    <div ref={headerRef} className="sticky top-0 z-40 bg-white/3 backdrop-blur-md" style={{ borderBottom: '1px solid rgb(134, 139, 156)' }}>
+    <div
+      ref={headerRef}
+      className={`sticky top-0 z-40 bg-white/3 backdrop-blur-md transition-transform duration-300 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
+      style={{ borderBottom: '1px solid rgb(134, 139, 156)' }}
+    >
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
         <div>
           <div className="text-xl font-bold">College Marketplace</div>
