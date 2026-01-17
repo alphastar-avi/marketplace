@@ -5,8 +5,8 @@ import { useMarketplace } from '../../state/MarketplaceContext'
 import { placeholderImage, nowIso } from '../../utils'
 import Header from './Header'
 import ProductCard from './ProductCard'
-import FloatingActions from './FloatingActions'
 import { Product } from '../../types'
+import FloatingActions from './FloatingActions'
 
 export default function Marketplace({ onOpenChat }: { onOpenChat: (chatId: string) => void }) {
   const { products, setProducts, favorites, toggleFavorite, user, deleteProduct } = useMarketplace()
