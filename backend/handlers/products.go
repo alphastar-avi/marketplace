@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // GetProducts returns all products for a college
@@ -244,8 +245,18 @@ func DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	result = config.DB.Delete(&product)
-	if result.Error != nil {
+	if err := config.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", product.ID).Delete(&models.PurchaseRequest{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("product_id = ?", product.ID).Delete(&models.Favorite{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&product).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
 		return
 	}
