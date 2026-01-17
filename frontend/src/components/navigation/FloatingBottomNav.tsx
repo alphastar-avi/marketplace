@@ -1,13 +1,34 @@
+import { ComponentType } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, CarFront } from 'lucide-react'
+import { Home } from 'lucide-react'
+
+const CarpoolIcon = ({ size = 18 }: { size?: number }) => (
+	<svg
+		width={size}
+		height={size}
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		strokeWidth={2}
+		strokeLinecap="round"
+		strokeLinejoin="round"
+		className="opacity-90"
+	>
+		<path d="M10 2h4" />
+		<path d="M21 8l-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4A2 2 0 0 0 6.497 6.257L5 10 3 8" />
+		<path d="M7 14h.01M17 14h.01" />
+		<rect width="18" height="8" x="3" y="10" rx="2" />
+		<path d="M5 18v2m14-2v2" />
+	</svg>
+)
 
 type NavItem = {
-  key: 'home' | 'carpool'
-  label: string
-  path?: string
-  icon: typeof Home
-  isActive?: (pathname: string) => boolean
-  comingSoon?: boolean
+	key: 'home' | 'carpool'
+	label: string
+	path?: string
+	icon: ComponentType<{ size?: number }>
+	isActive?: (pathname: string) => boolean
+	comingSoon?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -21,7 +42,7 @@ const navItems: NavItem[] = [
   {
     key: 'carpool',
     label: 'CarPooling',
-    icon: CarFront,
+    icon: CarpoolIcon,
     comingSoon: true,
     isActive: () => false,
   },
