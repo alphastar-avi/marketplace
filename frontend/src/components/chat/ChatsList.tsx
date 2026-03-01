@@ -32,8 +32,11 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
       if (!aLastMessage) return 1
       if (!bLastMessage) return -1
 
-      const timeA = aLastMessage.at ? new Date(aLastMessage.at).getTime() : 0
-      const timeB = bLastMessage.at ? new Date(bLastMessage.at).getTime() : 0
+      const aTime = aLastMessage.created_at || aLastMessage.at
+      const bTime = bLastMessage.created_at || bLastMessage.at
+
+      const timeA = aTime ? new Date(aTime).getTime() : 0
+      const timeB = bTime ? new Date(bTime).getTime() : 0
       return timeB - timeA
     })
 
@@ -64,7 +67,8 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
     return typeof otherParticipant === 'string' ? otherParticipant : otherParticipant.name || 'Unknown User'
   }
 
-  const getProductTitle = (productId: string) => {
+  const getProductTitle = (chat: any) => {
+    const productId = chat.productId || chat.product_id
     const product = products.find(p => p.id === productId)
     return product?.title || 'Unknown Product'
   }
@@ -116,7 +120,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
             {sortedChats.map((chat) => {
               const lastMessage = chat.messages[chat.messages.length - 1]
               const otherParticipant = getOtherParticipantName(chat)
-              const productTitle = getProductTitle(chat.productId)
+              const productTitle = getProductTitle(chat)
               const isSelected = selectedChatId === chat.id
 
               return (
@@ -145,15 +149,17 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
                           {otherParticipant}
                         </h3>
                         {lastMessage && (
-                          <span className="text-xs text-white/50 flex-shrink-0">
-                            {lastMessage.at ? formatTime(lastMessage.at) : ''}
+                          <span className="text-xs text-white/60 flex-shrink-0">
+                            {(lastMessage.created_at || lastMessage.at) ? formatTime((lastMessage.created_at || lastMessage.at) as string) : ''}
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs text-white/60 mb-1 truncate">
-                        {productTitle}
-                      </p>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-white/60 truncate">
+                          {productTitle}
+                        </p>
+                      </div>
 
                       <p className="text-sm text-white/70 truncate">
                         {getLastMessage(chat)}
