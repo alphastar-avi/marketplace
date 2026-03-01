@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unknown-property */
-import { useRef, useEffect, forwardRef, useMemo } from 'react';
+import React, { useRef, useEffect, forwardRef, useMemo, Component, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { EffectComposer, wrapEffect } from '@react-three/postprocessing';
 import { Effect } from 'postprocessing';
@@ -97,6 +97,28 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }
 `;
+
+class ErrorBoundary extends Component<{ children: React.ReactNode, fallback: React.ReactNode }, { hasError: boolean }> {
+    constructor(props: any) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(error: any) {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.warn('WebGL Dither Error Caught:', error.message);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return this.props.fallback;
+        }
+        return this.props.children;
+    }
+}
 
 const ditherFragmentShader = `
 precision highp float;
@@ -280,29 +302,31 @@ export default function Dither({
     mouseRadius = 1
 }) {
     return (
-        <Canvas
-            className="dither-container"
-            camera={{ position: [0, 0, 6] }}
-            dpr={[1, 1.5]} // Clamp pixel ratio for performance
-            gl={{
-                antialias: false, // Dither effect doesn't need AA
-                preserveDrawingBuffer: false, // Save memory
-                depth: false, // 2D effect, no depth needed
-                stencil: false, // No stencil needed
-                powerPreference: "high-performance"
-            }}
-        >
-            <DitheredWaves
-                waveSpeed={waveSpeed}
-                waveFrequency={waveFrequency}
-                waveAmplitude={waveAmplitude}
-                waveColor={waveColor}
-                colorNum={colorNum}
-                pixelSize={pixelSize}
-                disableAnimation={disableAnimation}
-                enableMouseInteraction={enableMouseInteraction}
-                mouseRadius={mouseRadius}
-            />
-        </Canvas>
+        <ErrorBoundary fallback={<div className="dither-container" style={{ background: "transparent" }} />}>
+            <Canvas
+                className="dither-container"
+                camera={{ position: [0, 0, 6] }}
+                dpr={[1, 1.5]} // Clamp pixel ratio for performance
+                gl={{
+                    antialias: false, // Dither effect doesn't need AA
+                    preserveDrawingBuffer: false, // Save memory
+                    depth: false, // 2D effect, no depth needed
+                    stencil: false, // No stencil needed
+                    powerPreference: "high-performance"
+                }}
+            >
+                <DitheredWaves
+                    waveSpeed={waveSpeed}
+                    waveFrequency={waveFrequency}
+                    waveAmplitude={waveAmplitude}
+                    waveColor={waveColor}
+                    colorNum={colorNum}
+                    pixelSize={pixelSize}
+                    disableAnimation={disableAnimation}
+                    enableMouseInteraction={enableMouseInteraction}
+                    mouseRadius={mouseRadius}
+                />
+            </Canvas>
+        </ErrorBoundary>
     );
 }
