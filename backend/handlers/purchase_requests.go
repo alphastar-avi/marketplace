@@ -31,10 +31,10 @@ func CreatePurchaseRequest(c *gin.Context) {
 		return
 	}
 
-	// Check if user already has a pending request for this product
+	// Check if user already has a pending or accepted request for this product
 	var existingRequest models.PurchaseRequest
-	if err := config.DB.Where("product_id = ? AND buyer_id = ? AND status = ?", request.ProductID, request.BuyerID, "pending").First(&existingRequest).Error; err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "You already have a pending purchase request for this product"})
+	if err := config.DB.Where("product_id = ? AND buyer_id = ? AND status IN ?", request.ProductID, request.BuyerID, []string{"pending", "accepted"}).First(&existingRequest).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You already have an active purchase request for this product"})
 		return
 	}
 

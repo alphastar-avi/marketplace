@@ -5,7 +5,7 @@ import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus } = useMarketplace()
+  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus, purchaseRequests } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -128,14 +128,23 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
                 <div className="text-sm opacity-80">Posted: {new Date(prod.postedAt).toLocaleString()}</div>
                 <div className="flex gap-2">
                   {!isOwner ? (
-                    prod.status === 'available' ? (
-                      <button onClick={handleRequestItem} className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold">
-                        Request Item
+                    prod.status === 'sold' ? (
+                      <button onClick={() => alert('Item not available')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
+                        Sold
                       </button>
                     ) : (
-                      <button onClick={() => alert('Item not available')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
-                        {prod.status === 'sold' ? 'Sold' : 'Requested'}
-                      </button>
+                      (() => {
+                        const existingRequest = purchaseRequests.find(r => r.productId === prod.id && r.buyerId === user?.id && (r.status === 'pending' || r.status === 'accepted'))
+                        return existingRequest ? (
+                          <button onClick={() => alert('You already have a request for this item')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
+                            Requested
+                          </button>
+                        ) : (
+                          <button onClick={handleRequestItem} className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold">
+                            Request Item
+                          </button>
+                        )
+                      })()
                     )
                   ) : (
                     prod.status === 'sold' ? (
