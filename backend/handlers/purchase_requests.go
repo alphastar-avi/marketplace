@@ -125,9 +125,10 @@ func UpdatePurchaseRequest(c *gin.Context) {
 		return
 	}
 
-	// Accept or Decline status has been saved.
-	// Product status shouldn't change automatically here anymore;
-	// Sellers will trigger it via manual button action.
+	// If accepted, update product status to "requested" so it flags appropriately
+	if updateData.Status == "accepted" {
+		config.DB.Model(&models.Product{}).Where("id = ?", request.ProductID).Update("status", "requested")
+	}
 
 	// Preload relationships for response
 	config.DB.Preload("Product").Preload("Buyer").Preload("Seller").First(&request, request.ID)

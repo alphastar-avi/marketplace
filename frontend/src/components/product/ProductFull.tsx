@@ -5,7 +5,7 @@ import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus } = useMarketplace()
+  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -16,11 +16,6 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
 
   const isOwner = prod.sellerId === user?.id
   const isFavorited = favorites.includes(prod.id)
-
-  const startChat = async () => {
-    const c = await addChatIfMissing(prod.id, [user?.id || 'guest', prod.sellerId])
-    onOpenChat(c.id)
-  }
 
   const handleRequestItem = async () => {
     if (!user?.id) return
@@ -153,9 +148,6 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
                       </button>
                     )
                   )}
-                  <button onClick={startChat} className="py-2 px-3 rounded-md bg-white/6">
-                    Chat
-                  </button>
                 </div>
                 {isOwner && (
                   <button onClick={handleRemoveListing} className="w-full py-2 rounded-md bg-red-500 hover:bg-red-600 font-semibold transition-colors">
