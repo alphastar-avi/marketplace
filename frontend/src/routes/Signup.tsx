@@ -12,7 +12,8 @@ export default function Signup() {
     email: '',
     password: '',
     year: '',
-    department: ''
+    department: '',
+    college: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -96,7 +97,7 @@ export default function Signup() {
           </ul>
         </div>
 
-        <div className="flex-1 lg:max-w-lg lg:py-24">
+        <div className="flex-1 lg:max-w-lg lg:py-8">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-white">Create an account</h2>
@@ -214,6 +215,22 @@ export default function Signup() {
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="college" className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                    College Name
+                  </label>
+                  <input
+                    id="college"
+                    name="college"
+                    type="text"
+                    value={formData.college}
+                    onChange={handleChange}
+                    required
+                    placeholder="e.g. New York University"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                  />
                 </div>
 
                 <button
