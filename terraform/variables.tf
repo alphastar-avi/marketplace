@@ -34,8 +34,8 @@ variable "container_image_tag" {
   default     = "latest"
 }
 
-variable "gemini_api_key" {
-  description = "Google Gemini API key for AI description generation (optional)"
+variable "groq_api_key" {
+  description = "Groq API key for AI description generation (optional)"
   type        = string
   default     = ""
   sensitive   = true
