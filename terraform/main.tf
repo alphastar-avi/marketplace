@@ -135,8 +135,8 @@ resource "azurerm_container_app" "marketplace_backend" {
       }
 
       env {
-        name        = "GEMINI_API_KEY"
-        secret_name = "gemini-api-key"
+        name        = "GROQ_API_KEY"
+        secret_name = "groq-api-key"
       }
 
       # Azure Blob Storage env
@@ -166,8 +166,8 @@ resource "azurerm_container_app" "marketplace_backend" {
   }
 
   secret {
-    name  = "gemini-api-key"
-    value = var.gemini_api_key
+    name  = "groq-api-key"
+    value = var.groq_api_key
   }
 
   # Storage connection string secret (read from existing storage account)
