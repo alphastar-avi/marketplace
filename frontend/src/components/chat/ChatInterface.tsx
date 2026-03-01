@@ -36,7 +36,8 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
     )
   }
 
-  const product = products.find((p) => p.id === chat.productId)
+  const chatProductId = chat.productId || (chat as any).product_id
+  const product = products.find((p) => p.id === chatProductId)
   const isSeller = product?.sellerId === user?.id
   const otherParticipantObj = chat.participants.find((p: any) => {
     const participantId = typeof p === 'string' ? p : p.id
@@ -47,12 +48,14 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
     // Only show pending requests for this product
     const prProductId = pr.productId || pr.product_id;
     const prStatus = pr.status;
-    if (prProductId !== chat.productId || prStatus !== 'pending') return false;
+
+    if (prProductId !== chatProductId || prStatus !== 'pending') return false;
 
     // The request should explicitly involve the two participants in this exact chat
     const prBuyerId = pr.buyerId || pr.buyer_id;
     const prSellerId = pr.sellerId || pr.seller_id;
     const chatParticipantIds = chat.participants.map((p: any) => p?.id || (typeof p === 'string' ? p : p))
+
     return chatParticipantIds.includes(prBuyerId) && chatParticipantIds.includes(prSellerId)
   })
   const otherParticipant = typeof otherParticipantObj === 'string'
