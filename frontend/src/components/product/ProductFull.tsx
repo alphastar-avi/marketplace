@@ -22,11 +22,15 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
     onOpenChat(c.id)
   }
 
-  const handleRequestItem = () => {
+  const handleRequestItem = async () => {
     if (!user?.id) return
-    createPurchaseRequest(prod.id, user.id, prod.sellerId)
-    setShowRequestSent(true)
-    setTimeout(() => setShowRequestSent(false), 3000)
+    try {
+      await createPurchaseRequest(prod.id, user.id, prod.sellerId)
+      setShowRequestSent(true)
+      setTimeout(() => setShowRequestSent(false), 3000)
+    } catch (error: any) {
+      alert(error.message || 'Failed to send request')
+    }
   }
 
   const handleRemoveListing = async () => {
