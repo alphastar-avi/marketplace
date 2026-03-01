@@ -113,7 +113,6 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
           <div>
             <GlassCard>
               <div className="space-y-3">
-                <div className="font-semibold">Seller</div>
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 bg-white/10 rounded-full grid place-items-center">
                     {prod.seller?.avatar ? (
