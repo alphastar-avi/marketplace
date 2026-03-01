@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -12,7 +12,7 @@ import (
 // GetPurchaseRequests returns all purchase requests for a user
 func GetPurchaseRequests(c *gin.Context) {
 	var requests []models.PurchaseRequest
-	
+
 	// For now, get all requests (later filter by college/user)
 	result := config.DB.Preload("Product").Preload("Buyer").Preload("Seller").Find(&requests)
 	if result.Error != nil {
@@ -31,6 +31,13 @@ func CreatePurchaseRequest(c *gin.Context) {
 		return
 	}
 
+	// Check if user already has a pending request for this product
+	var existingRequest models.PurchaseRequest
+	if err := config.DB.Where("product_id = ? AND buyer_id = ? AND status = ?", request.ProductID, request.BuyerID, "pending").First(&existingRequest).Error; err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You already have a pending purchase request for this product"})
+		return
+	}
+
 	// Get product to determine college
 	var product models.Product
 	if err := config.DB.First(&product, request.ProductID).Error; err != nil {
@@ -45,6 +52,39 @@ func CreatePurchaseRequest(c *gin.Context) {
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create purchase request"})
 		return
+	}
+
+	// Create chat if it doesn't already exist for this buyer and seller on this product
+	var existingChats []models.Chat
+	config.DB.Preload("Participants").Where("product_id = ?", request.ProductID).Find(&existingChats)
+
+	chatExists := false
+	for _, chat := range existingChats {
+		hasBuyer, hasSeller := false, false
+		for _, p := range chat.Participants {
+			if p.ID == request.BuyerID {
+				hasBuyer = true
+			}
+			if p.ID == request.SellerID {
+				hasSeller = true
+			}
+		}
+		if hasBuyer && hasSeller {
+			chatExists = true
+			break
+		}
+	}
+
+	if !chatExists {
+		chat := models.Chat{
+			ProductID: request.ProductID,
+			CollegeID: product.CollegeID,
+		}
+		if err := config.DB.Create(&chat).Error; err == nil {
+			var participants []models.User
+			config.DB.Where("id IN ?", []uuid.UUID{request.BuyerID, request.SellerID}).Find(&participants)
+			config.DB.Model(&chat).Association("Participants").Append(participants)
+		}
 	}
 
 	// Preload relationships for response
