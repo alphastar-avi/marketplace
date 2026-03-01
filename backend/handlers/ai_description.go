@@ -17,16 +17,16 @@ import (
 
 // GenerateDescriptionRequest for JSON endpoint
 type GenerateDescriptionRequest struct {
-	Title      string   `json:"title" binding:"required"`
-	Category   string   `json:"category" binding:"required"`
-	ImageURLs  []string `json:"image_urls,omitempty"`
+	Title     string   `json:"title" binding:"required"`
+	Category  string   `json:"category" binding:"required"`
+	ImageURLs []string `json:"image_urls,omitempty"`
 }
 
 // GenerateDescriptionResponse for API responses
 type GenerateDescriptionResponse struct {
-	Description   string `json:"description"`
-	Model         string `json:"model"`
-	ProcessingTime int64 `json:"processing_time_ms"`
+	Description    string `json:"description"`
+	Model          string `json:"model"`
+	ProcessingTime int64  `json:"processing_time_ms"`
 }
 
 // GenerateDescriptionWithFiles handles multipart form uploads with images
@@ -92,8 +92,8 @@ func GenerateDescriptionWithFiles(c *gin.Context) {
 	processingTime := time.Since(startTime).Milliseconds()
 
 	c.JSON(http.StatusOK, GenerateDescriptionResponse{
-		Description:   description,
-		Model:         model,
+		Description:    description,
+		Model:          model,
 		ProcessingTime: processingTime,
 	})
 }
@@ -119,45 +119,33 @@ func GenerateDescription(c *gin.Context) {
 	processingTime := time.Since(startTime).Milliseconds()
 
 	c.JSON(http.StatusOK, GenerateDescriptionResponse{
-		Description:   description,
-		Model:         model,
+		Description:    description,
+		Model:          model,
 		ProcessingTime: processingTime,
 	})
 }
 
-// generateWithFallback tries Gemini, falls back to template
 func generateWithFallback(title, category string, imageURLs []string) (string, string) {
 	description, err := config.GenerateProductDescription(title, category, imageURLs)
 	if err != nil {
+		log.Printf("⚠️  Groq generation failed, using template fallback: %v", err)
 		// Fallback to template
-		return config.GenerateTemplateDescription(title, category), "template"
+		return config.GenerateTemplateDescription(title, category), "template-fallback"
 	}
 
-	// Check if Gemini was actually used (not fallback)
-	if config.IsGeminiConfigured() {
-		return description, "gemini-2.0-flash"
-	}
-
-	return description, "template"
+	return description, "groq-vision"
 }
 
-// generateWithTempFiles processes temp file paths
 func generateWithTempFiles(title, category string, tempFilePaths []string) (string, string) {
 	description, err := config.GenerateProductDescriptionFromTempFiles(title, category, tempFilePaths)
 	if err != nil {
-		log.Printf("⚠️  Gemini generation failed, using template fallback: %v", err)
+		log.Printf("⚠️  Groq generation failed, using template fallback: %v", err)
 		// Fallback to template
-		return config.GenerateTemplateDescription(title, category), "template"
+		return config.GenerateTemplateDescription(title, category), "template-fallback"
 	}
 
-	// Check if Gemini was actually used (not fallback)
-	if config.IsGeminiConfigured() {
-		log.Printf("✅ Using Gemini-generated description")
-		return description, "gemini-2.0-flash"
-	}
-
-	log.Printf("ℹ️  Using template-generated description (Gemini not configured)")
-	return description, "template"
+	log.Printf("✅ Using Groq-generated description")
+	return description, "groq-vision"
 }
 
 // saveFilesToTemp saves uploaded files to temp directory
@@ -224,16 +212,17 @@ func cleanupTempFiles(filePaths []string) {
 
 // GetAIStatus returns AI service availability
 func GetAIStatus(c *gin.Context) {
-	isConfigured := config.IsGeminiConfigured()
-	
+	isConfigured := config.IsGroqConfigured()
+
 	c.JSON(http.StatusOK, gin.H{
-		"gemini_configured": isConfigured,
+		"groq_configured": isConfigured,
 		"status": func() string {
 			if isConfigured {
 				return "available"
 			}
 			return "template_only"
 		}(),
+		"models_available": []string{"groq-vision", "template-fallback"},
 	})
 }
 
@@ -252,7 +241,7 @@ func TestFileUpload(c *gin.Context) {
 	}
 
 	files := form.File["images"]
-	
+
 	c.JSON(http.StatusOK, gin.H{
 		"files_received": len(files),
 		"files": func() []map[string]interface{} {
@@ -267,4 +256,3 @@ func TestFileUpload(c *gin.Context) {
 		}(),
 	})
 }
-

@@ -19,7 +19,15 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setTimeout(() => {
+      setToastMessage(null)
+    }, 3000)
+  }
 
   const onDrop = (files: FileList | null) => {
     if (!files) return
@@ -91,20 +99,12 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
         formData.append('images', file)
       })
 
-      const startTime = Date.now()
       const response = await productsAPI.generateDescriptionWithFiles(formData)
-      const processingTime = Date.now() - startTime
-
       setDesc(response.data.description)
-
-      // Show alert with model and processing time
-      const modelInfo = response.data.model === 'gemini-2.0-flash'
-        ? 'Generated with Gemini AI'
-        : 'Generated with template (Gemini API not configured)'
-      alert(`${modelInfo}\nProcessing time: ${response.data.processing_time_ms}ms`)
+      // Successfully generated via Groq or template - no popup needed.
     } catch (error: any) {
       console.error('Error generating description:', error)
-      alert('Failed to generate description. Please try again.')
+      showToast('Failed to generate description. Please try again.')
     } finally {
       setGenerating(false)
     }
@@ -363,8 +363,17 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
               </ul>
             </GlassCard>
           </div>
-        </div >
-      </div >
-    </div >
+        </div>
+      </div>
+
+      {/* Ephemeral Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-red-500/90 backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-lg border border-red-400/30 flex items-center gap-2">
+            <span className="text-sm font-medium">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
