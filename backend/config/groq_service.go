@@ -207,6 +207,13 @@ func callGroqAPI(contentArray []interface{}) (string, error) {
 		return "", fmt.Errorf("GROQ_API_KEY not configured")
 	}
 
+	// [DEBUG] - Print key fingerprint (Do not print full key)
+	if len(apiKey) > 4 {
+		log.Printf("🔍 DEBUG: GROQ_API_KEY is configured. Length: %d, Ends with: ...%s", len(apiKey), apiKey[len(apiKey)-4:])
+	} else {
+		log.Printf("🔍 DEBUG: GROQ_API_KEY is configured but unusually short: %d chars", len(apiKey))
+	}
+
 	url := "https://api.groq.com/openai/v1/chat/completions"
 
 	requestBody := GroqRequest{
