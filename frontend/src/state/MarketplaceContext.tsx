@@ -229,6 +229,13 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         }
         return [...prev, updatedChat]
       })
+
+      // Also refresh purchase requests periodically so the UI unlocks for buyer immediately upon acceptance
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        const requestsResponse = await purchaseRequestsAPI.getAll()
+        setPurchaseRequests(requestsResponse.data)
+      }
     } catch (error) {
       console.error('Failed to refresh chat:', error)
     }
@@ -240,8 +247,12 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     if (!token) return
 
     try {
-      const response = await chatsAPI.getAll()
-      setChats(response.data)
+      const [chatsResponse, requestsResponse] = await Promise.all([
+        chatsAPI.getAll(),
+        purchaseRequestsAPI.getAll()
+      ])
+      setChats(chatsResponse.data)
+      setPurchaseRequests(requestsResponse.data)
     } catch (error) {
       console.error('Failed to refresh chats:', error)
     }
