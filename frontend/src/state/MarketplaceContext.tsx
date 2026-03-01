@@ -133,7 +133,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const productData = { ...p, sellerId: currentUser.id }
-      const response = await productsAPI.create(productData)
+      const response = await productsAPI.create(productData as any)
       const newProduct = response.data
       setProducts((s) => [newProduct, ...s])
       return newProduct
@@ -152,7 +152,9 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProductStatus = async (productId: string, status: Product['status']) => {
     try {
-      await productsAPI.update(productId, { status })
+      const formData = new FormData()
+      formData.append('status', status)
+      await productsAPI.update(productId, formData)
       setProducts((s) => s.map((p) => (p.id === productId ? { ...p, status } : p)))
     } catch (error) {
       console.error('Failed to update product status:', error)
@@ -338,18 +340,10 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       const response = await purchaseRequestsAPI.updateStatus(requestId, status)
       const updatedRequest = response.data
       setPurchaseRequests((s) => s.map((r) => (r.id === requestId ? updatedRequest : r)))
-
-      if (status === 'accepted') {
-        await updateProductStatus(updatedRequest.productId, 'sold')
-      }
     } catch (error) {
       console.error('Failed to update purchase request:', error)
       // Fallback to local update
       setPurchaseRequests((s) => s.map((r) => (r.id === requestId ? { ...r, status } : r)))
-      if (status === 'accepted') {
-        const request = purchaseRequests.find((r) => r.id === requestId)
-        if (request) await updateProductStatus(request.productId, 'sold')
-      }
     }
   }
 
