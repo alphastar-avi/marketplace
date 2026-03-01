@@ -20,7 +20,7 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -6 }}
-      className={`rounded-xl overflow-hidden bg-white/3 p-2.5 cursor-pointer relative shadow-2xl shadow-black/20 ${product.status === 'sold' ? 'opacity-60' : ''}`}
+      className={`rounded-xl overflow-hidden bg-white/3 p-2.5 cursor-pointer relative shadow-2xl shadow-black/20 ${product.status === 'requested' || product.status === 'sold' ? 'opacity-60' : ''}`}
       style={{ border: '1px solid rgb(50, 56, 68)' }}
       onClick={handleProductClick}
     >
@@ -64,9 +64,9 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
         </div>
       </div>
 
-      {product.status === 'sold' && (
+      {(product.status === 'requested' || product.status === 'sold') && (
         <div className="absolute bottom-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-          Being sold
+          {product.status === 'sold' ? 'Sold' : 'Being sold'}
         </div>
       )}
     </motion.div>
