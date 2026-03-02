@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"net/http"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -11,10 +11,23 @@ import (
 
 // GetChats returns all chats for a user (college-filtered)
 func GetChats(c *gin.Context) {
+	// Extract user ID from context
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized user"})
+		return
+	}
+
 	var chats []models.Chat
-	
-	// For now, get all chats (later filter by user's college)
-	result := config.DB.Preload("Product").Preload("Participants").Preload("Messages.From").Find(&chats)
+
+	// Fetch chats where the user is a participant
+	result := config.DB.Joins("JOIN chat_participants ON chat_participants.chat_id = chats.id").
+		Where("chat_participants.user_id = ?", userID).
+		Preload("Product").
+		Preload("Participants").
+		Preload("Messages.From").
+		Find(&chats)
+
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch chats"})
 		return

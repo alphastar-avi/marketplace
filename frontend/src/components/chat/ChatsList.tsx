@@ -23,7 +23,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
       })
       const participantName = typeof otherParticipant === 'string' ? otherParticipant : (otherParticipant as any)?.name || ''
       return product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             participantName.toLowerCase().includes(searchQuery.toLowerCase())
+        participantName.toLowerCase().includes(searchQuery.toLowerCase())
     })
     .sort((a, b) => {
       const aLastMessage = a.messages[a.messages.length - 1]
@@ -31,14 +31,20 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
       if (!aLastMessage && !bLastMessage) return 0
       if (!aLastMessage) return 1
       if (!bLastMessage) return -1
-      return new Date(bLastMessage.at).getTime() - new Date(aLastMessage.at).getTime()
+
+      const aTime = aLastMessage.created_at || aLastMessage.at
+      const bTime = bLastMessage.created_at || bLastMessage.at
+
+      const timeA = aTime ? new Date(aTime).getTime() : 0
+      const timeB = bTime ? new Date(bTime).getTime() : 0
+      return timeB - timeA
     })
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp)
     const now = new Date()
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     } else if (diffInHours < 168) { // 7 days
@@ -54,14 +60,15 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
       const participantId = typeof p === 'string' ? p : p.id
       return participantId !== user?.id
     })
-    
+
     if (!otherParticipant) return 'Unknown User'
-    
+
     // Return name if it's a User object, otherwise return the ID
     return typeof otherParticipant === 'string' ? otherParticipant : otherParticipant.name || 'Unknown User'
   }
 
-  const getProductTitle = (productId: string) => {
+  const getProductTitle = (chat: any) => {
+    const productId = chat.productId || chat.product_id
     const product = products.find(p => p.id === productId)
     return product?.title || 'Unknown Product'
   }
@@ -69,7 +76,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
   const getLastMessage = (chat: any) => {
     const lastMessage = chat.messages[chat.messages.length - 1]
     if (!lastMessage) return 'No messages yet'
-    
+
     const isFromUser = lastMessage.from === user?.id
     const prefix = isFromUser ? 'You: ' : ''
     return prefix + lastMessage.text
@@ -84,8 +91,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-white/10">
-        <h1 className="text-2xl font-bold mb-4">Chats</h1>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-4 h-4" />
@@ -114,20 +120,19 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
             {sortedChats.map((chat) => {
               const lastMessage = chat.messages[chat.messages.length - 1]
               const otherParticipant = getOtherParticipantName(chat)
-              const productTitle = getProductTitle(chat.productId)
+              const productTitle = getProductTitle(chat)
               const isSelected = selectedChatId === chat.id
-              
+
               return (
                 <motion.div
                   key={chat.id}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onSelectChat(chat.id)}
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                    isSelected 
-                      ? 'bg-indigo-500/20 border border-indigo-500/30' 
-                      : 'hover:bg-white/5 border border-transparent'
-                  }`}
+                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isSelected
+                    ? 'bg-indigo-500/20 border border-indigo-500/30'
+                    : 'hover:bg-white/5 border border-transparent'
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
@@ -144,16 +149,18 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
                           {otherParticipant}
                         </h3>
                         {lastMessage && (
-                          <span className="text-xs text-white/50 flex-shrink-0">
-                            {formatTime(lastMessage.at)}
+                          <span className="text-xs text-white/60 flex-shrink-0">
+                            {(lastMessage.created_at || lastMessage.at) ? formatTime((lastMessage.created_at || lastMessage.at) as string) : ''}
                           </span>
                         )}
                       </div>
-                      
-                      <p className="text-xs text-white/60 mb-1 truncate">
-                        {productTitle}
-                      </p>
-                      
+
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-white/60 truncate">
+                          {productTitle}
+                        </p>
+                      </div>
+
                       <p className="text-sm text-white/70 truncate">
                         {getLastMessage(chat)}
                       </p>

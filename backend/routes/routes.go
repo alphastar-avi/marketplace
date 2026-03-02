@@ -50,7 +50,7 @@ func SetupRoutes(r *gin.Engine) {
 		// Chats routes
 		chats := api.Group("/chats")
 		{
-			chats.GET("", handlers.GetChats)
+			chats.GET("", middleware.AuthMiddleware(), handlers.GetChats)
 			chats.POST("", handlers.CreateChat)
 			chats.GET("/:id", handlers.GetChat)
 			chats.GET("/:id/messages", handlers.GetChatMessages)

@@ -5,7 +5,7 @@ import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, addChatIfMissing, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct } = useMarketplace()
+  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus, purchaseRequests } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -17,16 +17,15 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
   const isOwner = prod.sellerId === user?.id
   const isFavorited = favorites.includes(prod.id)
 
-  const startChat = async () => {
-    const c = await addChatIfMissing(prod.id, [user?.id || 'guest', prod.sellerId])
-    onOpenChat(c.id)
-  }
-
-  const handleRequestItem = () => {
+  const handleRequestItem = async () => {
     if (!user?.id) return
-    createPurchaseRequest(prod.id, user.id, prod.sellerId)
-    setShowRequestSent(true)
-    setTimeout(() => setShowRequestSent(false), 3000)
+    try {
+      await createPurchaseRequest(prod.id, user.id, prod.sellerId)
+      setShowRequestSent(true)
+      setTimeout(() => setShowRequestSent(false), 3000)
+    } catch (error: any) {
+      alert(error.message || 'Failed to send request')
+    }
   }
 
   const handleRemoveListing = async () => {
@@ -113,7 +112,6 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
           <div>
             <GlassCard>
               <div className="space-y-3">
-                <div className="font-semibold">Seller</div>
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 bg-white/10 rounded-full grid place-items-center">
                     {prod.seller?.avatar ? (
@@ -129,18 +127,36 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
                 </div>
                 <div className="text-sm opacity-80">Posted: {new Date(prod.postedAt).toLocaleString()}</div>
                 <div className="flex gap-2">
-                  {!isOwner && prod.status === 'available' ? (
-                    <button onClick={handleRequestItem} className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold">
-                      Request Item
-                    </button>
+                  {!isOwner ? (
+                    prod.status === 'sold' ? (
+                      <button onClick={() => alert('Item not available')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
+                        Sold
+                      </button>
+                    ) : (
+                      (() => {
+                        const existingRequest = purchaseRequests.find(r => r.productId === prod.id && r.buyerId === user?.id && (r.status === 'pending' || r.status === 'accepted'))
+                        return existingRequest ? (
+                          <button onClick={() => alert('You already have a request for this item')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
+                            Requested
+                          </button>
+                        ) : (
+                          <button onClick={handleRequestItem} className="flex-1 py-2 rounded-md bg-gradient-to-r from-emerald-500 to-green-400 font-semibold">
+                            Request Item
+                          </button>
+                        )
+                      })()
+                    )
                   ) : (
-                    <button onClick={() => alert('Item not available')} className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
-                      {prod.status === 'sold' ? 'Sold' : 'Requested'}
-                    </button>
+                    prod.status === 'sold' ? (
+                      <button className="flex-1 py-2 rounded-md bg-gray-500 font-semibold cursor-not-allowed" disabled>
+                        Sold
+                      </button>
+                    ) : (
+                      <button onClick={() => updateProductStatus(prod.id, 'sold')} className="flex-1 py-2 rounded-md bg-indigo-500 hover:bg-indigo-600 font-semibold transition-colors">
+                        Mark as Sold
+                      </button>
+                    )
                   )}
-                  <button onClick={startChat} className="py-2 px-3 rounded-md bg-white/6">
-                    Chat
-                  </button>
                 </div>
                 {isOwner && (
                   <button onClick={handleRemoveListing} className="w-full py-2 rounded-md bg-red-500 hover:bg-red-600 font-semibold transition-colors">

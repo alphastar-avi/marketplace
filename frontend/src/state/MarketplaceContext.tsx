@@ -49,7 +49,7 @@ function useLocalStorage<T>(key: string, initial: T) {
     try {
       const raw = localStorage.getItem(key)
       if (raw) setState(JSON.parse(raw) as T)
-    } catch {}
+    } catch { }
     setHasHydrated(true)
   }, [key])
 
@@ -57,7 +57,7 @@ function useLocalStorage<T>(key: string, initial: T) {
     if (!hasHydrated) return
     try {
       localStorage.setItem(key, JSON.stringify(state))
-    } catch {}
+    } catch { }
   }, [key, state, hasHydrated])
 
   return [state, setState, hasHydrated] as const
@@ -80,29 +80,33 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         const productsResponse = await productsAPI.getAll()
         setProducts(productsResponse.data)
 
-        // Load chats
-        const chatsResponse = await chatsAPI.getAll()
-        setChats(chatsResponse.data)
+        // Check for authenticated user token to load protected info
+        const token = localStorage.getItem('auth_token')
+        const savedUser = localStorage.getItem('user')
+
+        // Load chats only if authenticated because the backend restricts it
+        if (token) {
+          try {
+            const chatsResponse = await chatsAPI.getAll()
+            setChats(chatsResponse.data)
+          } catch (error) {
+            console.error('Failed to load initial chats:', error)
+          }
+        }
 
         // Load purchase requests
         const requestsResponse = await purchaseRequestsAPI.getAll()
         setPurchaseRequests(requestsResponse.data)
 
-        // Load carpools
-        const carpoolResponse = await carpoolAPI.getAll()
-        setCarpoolRides(carpoolResponse.data)
-
-        // Check for authenticated user
-        const token = localStorage.getItem('auth_token')
-        const savedUser = localStorage.getItem('user')
-        
+        // Check for authenticated user token to load protected info
+        // (already extracted token and savedUser above)
         if (token && savedUser) {
           try {
             // Verify token is still valid by fetching current user
             const userResponse = await authAPI.getMe()
             const userData = userResponse.data
             setUser(userData)
-            
+
             // Load user's favorites
             const favoritesResponse = await favoritesAPI.getByUser(userData.id)
             const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
@@ -197,11 +201,11 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const addProduct = async (p: Omit<Product, 'id' | 'postedAt'>) => {
     try {
       let currentUser = user
-      
+
       // Ensure we have a valid seller ID
       if (!currentUser || !currentUser.id.includes('-')) {
         // Create a new user first if needed
-        const newUser = await usersAPI.create({ 
+        const newUser = await usersAPI.create({
           name: currentUser?.name || 'Anonymous User',
           email: currentUser?.email || 'user@example.com'
         })
@@ -209,18 +213,18 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         setUser(currentUser)
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(currentUser))
       }
-      
+
       const productData = { ...p, sellerId: currentUser.id }
-      const response = await productsAPI.create(productData)
+      const response = await productsAPI.create(productData as any)
       const newProduct = response.data
       setProducts((s) => [newProduct, ...s])
       return newProduct
     } catch (error) {
       console.error('Failed to create product:', error)
-      
+
       // Show error alert to user - simple alert for now since toast system needs more setup
       alert('❌ Sorry, we got some error creating your product. Please try again.')
-      
+
       // Fallback to local creation
       const prod: Product = { ...p, id: uid('p'), postedAt: nowIso(), status: 'available' }
       setProducts((s) => [prod, ...s])
@@ -230,7 +234,9 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
   const updateProductStatus = async (productId: string, status: Product['status']) => {
     try {
-      await productsAPI.update(productId, { status })
+      const formData = new FormData()
+      formData.append('status', status)
+      await productsAPI.update(productId, formData)
       setProducts((s) => s.map((p) => (p.id === productId ? { ...p, status } : p)))
     } catch (error) {
       console.error('Failed to update product status:', error)
@@ -242,7 +248,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = async (u: Partial<UserType>) => {
     const currentUser = user || { id: uid('u'), name: 'You' }
     const updatedUser = { ...currentUser, ...u } as UserType
-    
+
     try {
       // Always create new user for now (skip UUID validation issues)
       const response = await usersAPI.create(updatedUser)
@@ -260,10 +266,10 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const addChatIfMissing = async (productId: string, participants: string[]) => {
     const existing = chats.find((c) => c.productId === productId && arraysEq(c.participants, participants))
     if (existing) return existing
-    
+
     // Only create backend chat if all participants have valid UUIDs
     const validParticipants = participants.every(id => id.includes('-'))
-    
+
     try {
       if (validParticipants) {
         const response = await chatsAPI.create({ product_id: productId, participants })
@@ -284,7 +290,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
   const pushMessage = async (chatId: string, from: string, text: string) => {
     if (!user) return
-    
+
     try {
       const response = await chatsAPI.sendMessage(chatId, { from_id: user.id, text })
       const newMessage = response.data
@@ -307,15 +313,30 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         }
         return [...prev, updatedChat]
       })
+
+      // Also refresh purchase requests periodically so the UI unlocks for buyer immediately upon acceptance
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        const requestsResponse = await purchaseRequestsAPI.getAll()
+        setPurchaseRequests(requestsResponse.data)
+      }
     } catch (error) {
       console.error('Failed to refresh chat:', error)
     }
   }, [])
 
   const refreshChats = useCallback(async () => {
+    // Check local storage for token dynamically so we don't need to depend on slowly updating context state
+    const token = localStorage.getItem('auth_token')
+    if (!token) return
+
     try {
-      const response = await chatsAPI.getAll()
-      setChats(response.data)
+      const [chatsResponse, requestsResponse] = await Promise.all([
+        chatsAPI.getAll(),
+        purchaseRequestsAPI.getAll()
+      ])
+      setChats(chatsResponse.data)
+      setPurchaseRequests(requestsResponse.data)
     } catch (error) {
       console.error('Failed to refresh chats:', error)
     }
@@ -323,12 +344,17 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!isHydrated) return
+
+    // Only set up polling if we have a token initially, though refreshChats skips if missing anyway
+    const token = localStorage.getItem('auth_token')
+    if (!token) return
+
     const interval = window.setInterval(() => {
       refreshChats()
     }, 6000)
 
     return () => window.clearInterval(interval)
-  }, [isHydrated, refreshChats])
+  }, [isHydrated, refreshChats, user]) // Re-run effect if user logs in or out
 
   const toggleFavorite = async (productId: string) => {
     if (!user || !user.id.includes('-')) {
@@ -336,7 +362,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       setFavorites((prev) => (prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]))
       return
     }
-    
+
     try {
       const isFavorited = favorites.includes(productId)
       if (isFavorited) {
@@ -358,9 +384,15 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       const response = await purchaseRequestsAPI.create({ product_id: productId, buyer_id: buyerId, seller_id: sellerId })
       const newRequest = response.data
       setPurchaseRequests((s) => [newRequest, ...s])
+      refreshChats()
       return newRequest
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create purchase request:', error)
+
+      if (error.response && error.response.status === 400) {
+        throw new Error(error.response.data.error || 'You already have a pending purchase request for this product')
+      }
+
       // Fallback to local creation
       const request: PurchaseRequest = { id: uid('pr'), productId, buyerId, sellerId, status: 'pending', createdAt: nowIso() }
       setPurchaseRequests((s) => [request, ...s])
@@ -390,18 +422,10 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       const response = await purchaseRequestsAPI.updateStatus(requestId, status)
       const updatedRequest = response.data
       setPurchaseRequests((s) => s.map((r) => (r.id === requestId ? updatedRequest : r)))
-      
-      if (status === 'accepted') {
-        await updateProductStatus(updatedRequest.productId, 'sold')
-      }
     } catch (error) {
       console.error('Failed to update purchase request:', error)
       // Fallback to local update
       setPurchaseRequests((s) => s.map((r) => (r.id === requestId ? { ...r, status } : r)))
-      if (status === 'accepted') {
-        const request = purchaseRequests.find((r) => r.id === requestId)
-        if (request) await updateProductStatus(request.productId, 'sold')
-      }
     }
   }
 

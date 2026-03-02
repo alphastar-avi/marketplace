@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"net/http"
-	"os"
-	"time"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,6 +24,7 @@ type RegisterRequest struct {
 	Password   string `json:"password" binding:"required,min=6"`
 	Year       string `json:"year"`
 	Department string `json:"department"`
+	College    string `json:"college" binding:"required"`
 }
 
 type AuthResponse struct {
@@ -52,11 +54,27 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// Get default college
-	var defaultCollege models.College
-	if err := config.DB.First(&defaultCollege).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Default college not found"})
-		return
+	// Extract domain from email
+	domain := ""
+	parts := strings.Split(req.Email, "@")
+	if len(parts) == 2 {
+		domain = parts[1]
+	} else {
+		domain = "unknown"
+	}
+
+	// Find or Create College
+	var college models.College
+	if err := config.DB.Where("LOWER(name) = LOWER(?) OR LOWER(domain) = LOWER(?)", req.College, domain).First(&college).Error; err != nil {
+		// College not found, create it
+		college = models.College{
+			Name:   req.College,
+			Domain: domain,
+		}
+		if err := config.DB.Create(&college).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create college. Domain may already be taken."})
+			return
+		}
 	}
 
 	// Create user
@@ -66,7 +84,7 @@ func Register(c *gin.Context) {
 		Password:   string(hashedPassword),
 		Year:       req.Year,
 		Department: req.Department,
-		CollegeID:  defaultCollege.ID,
+		CollegeID:  college.ID,
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {

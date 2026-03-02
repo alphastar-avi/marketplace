@@ -6,7 +6,7 @@ All code changes for the AI description generation feature have been implemented
 
 ### Backend Files
 - ✅ `backend/handlers/ai_description.go` - AI description handlers (already exists)
-- ✅ `backend/config/gemini_service.go` - Gemini API integration (already exists)
+- ✅ `backend/config/groq_service.go` - Groq API integration
 - ✅ `backend/routes/routes.go` - API routes (already configured)
 - ✅ Temp directory now uses `/tmp/ai-analysis` in production containers
 
@@ -16,18 +16,18 @@ All code changes for the AI description generation feature have been implemented
 - ✅ `frontend/src/api/client.ts` - Fixed FormData handling for multipart uploads
 
 ### Deployment Configuration
-- ✅ `terraform/main.tf` - Added GEMINI_API_KEY environment variable
-- ✅ `terraform/variables.tf` - Added gemini_api_key variable
-- ✅ `.github/workflows/prod.yml` - Updated to pass GEMINI_API_KEY to Terraform
-- ✅ `DEPLOYMENT.md` - Updated with GEMINI_API_KEY instructions
+- ✅ `terraform/main.tf` - Added GROQ_API_KEY environment variable
+- ✅ `terraform/variables.tf` - Added groq_api_key variable
+- ✅ `.github/workflows/prod.yml` - Updated to pass GROQ_API_KEY to Terraform
+- ✅ `DEPLOYMENT.md` - Updated with GROQ_API_KEY instructions
 
 ## 📋 Manual Steps Required
 
-### 1. Get Google Gemini API Key (Optional but Recommended)
+### 1. Get Groq API Key (Optional but Recommended)
 
 **If you want AI-powered descriptions:**
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with your Google account
+1. Go to [Groq Console](https://console.groq.com/keys)
+2. Sign in with your account
 3. Click "Create API Key"
 4. Copy the API key (you'll need it in step 2)
 
@@ -39,8 +39,8 @@ All code changes for the AI description generation feature have been implemented
 2. Navigate to: **Settings** → **Secrets and variables** → **Actions**
 3. Click **"New repository secret"**
 4. Add the following secret:
-   - **Name**: `GEMINI_API_KEY`
-   - **Value**: Your Google Gemini API key from step 1 (or leave empty if not using AI)
+   - **Name**: `GROQ_API_KEY`
+   - **Value**: Your Groq API key from step 1 (or leave empty if not using AI)
 5. Click **"Add secret"**
 
 **Note**: If you don't add this secret or leave it empty, the system will use template-based descriptions. The deployment will still work, but AI features will be disabled.
@@ -55,12 +55,12 @@ If your container app is already running, you need to update it with the new env
 3. Go to **Settings** → **Secrets and environment variables**
 4. Click **"Edit and deploy new revision"**
 5. Under **Environment variables**, add:
-   - **Name**: `GEMINI_API_KEY`
-   - **Value**: Your Gemini API key (or leave empty)
+   - **Name**: `GROQ_API_KEY`
+   - **Value**: Your Groq API key (or leave empty)
 6. Click **"Save"**
 
 **Option B: Using Terraform (Recommended)**
-1. Make sure you've added `GEMINI_API_KEY` to GitHub secrets (step 2)
+1. Make sure you've added `GROQ_API_KEY` to GitHub secrets (step 2)
 2. Push to `prod` branch - Terraform will automatically update the container app
 
 **Option C: Using Azure CLI**
@@ -68,7 +68,7 @@ If your container app is already running, you need to update it with the new env
 az containerapp update \
   --name ca-marketplace-backend-dev \
   --resource-group rg-marketplace-dev \
-  --set-env-vars GEMINI_API_KEY="<your-api-key>"
+  --set-env-vars GROQ_API_KEY="<your-api-key>"
 ```
 
 ### 4. Deploy
@@ -88,7 +88,7 @@ git push origin prod
 
 The GitHub Actions workflow will:
 - Build the backend Docker image with AI features
-- Run Terraform to update the container app with GEMINI_API_KEY
+- Run Terraform to update the container app with GROQ_API_KEY
 - Deploy frontend with updated API client
 
 **Manual Deployment (If needed):**
@@ -103,7 +103,7 @@ cd ../terraform
 terraform init
 terraform apply \
   -var="db_admin_password=$DB_PASSWORD" \
-  -var="gemini_api_key=$GEMINI_API_KEY" \
+  -var="groq_api_key=$GROQ_API_KEY" \
   -var="container_image_tag=latest"
 ```
 
@@ -114,10 +114,10 @@ terraform apply \
 2. Click "List Item"
 3. Upload product images
 4. Enter title and category
-5. Click the **"AI"** button next to the description field
+5. Click the **"Enhance Description"** button
 6. Verify:
-   - If `GEMINI_API_KEY` is set: Should see "Generated with Gemini AI" alert
-   - If not set: Should see "Generated with template" alert
+   - If `GROQ_API_KEY` is set: Should get generated Groq output mapped to description input
+   - If not set: Should receive template description mapping
 
 **Test Backend API:**
 ```bash
@@ -125,10 +125,10 @@ terraform apply \
 curl https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api/ai/status
 
 # Expected response if configured:
-# {"gemini_configured": true, "status": "available"}
+# {"groq_configured": true, "status": "available"}
 
 # Expected response if not configured:
-# {"gemini_configured": false, "status": "template_only"}
+# {"groq_configured": false, "status": "template_only"}
 ```
 
 ## 🔧 Troubleshooting
@@ -139,9 +139,9 @@ curl https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azureconta
 - Ensure backend is accessible from frontend
 
 ### "Template Only" Responses
-- Check if `GEMINI_API_KEY` is set in container app
+- Check if `GROQ_API_KEY` is set in container app
 - Verify API key is valid (test it directly with curl)
-- Check backend logs for Gemini API errors
+- Check backend logs for Groq API errors
 
 ### File Upload Errors
 - Verify temp directory is writable (`/tmp/ai-analysis` in containers)
@@ -151,7 +151,7 @@ curl https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azureconta
 ### Container App Won't Start
 - Check container logs in Azure Portal
 - Verify all environment variables are set correctly
-- Ensure GEMINI_API_KEY secret exists (even if empty)
+- Ensure GROQ_API_KEY secret exists (even if empty)
 
 ## 📝 Environment Variables Reference
 
@@ -159,17 +159,17 @@ The following environment variables are now used:
 
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `GEMINI_API_KEY` | Google Gemini API key for AI descriptions | No | "" (uses templates) |
+| `GROQ_API_KEY` | Groq Vision API key for AI descriptions | No | "" (uses templates) |
 | `GIN_MODE` | Gin framework mode | No | "release" (production) |
 | `TMPDIR` | Temp directory (not used currently) | No | `/tmp` |
 
 ## 🎯 Feature Summary
 
 The AI description generation feature:
-- ✅ Generates product descriptions using Google Gemini 2.0 Flash
+- ✅ Generates product descriptions using Groq LLM API
 - ✅ Falls back to template-based descriptions if API key not configured
-- ✅ Processes uploaded images (up to 4 images)
-- ✅ Returns processing time and model used
+- ✅ Processes uploaded images
 - ✅ Works with both file uploads and image URLs
 - ✅ Automatically cleans up temp files after processing
+
 
