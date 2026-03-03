@@ -1,9 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import { Product, UserType, Chat, PurchaseRequest } from '../types'
+import { Product, UserType, Chat, PurchaseRequest, CarpoolRide, CarpoolJoinRequest } from '../types'
 import { uid, nowIso, arraysEq, STORAGE_KEYS } from '../utils'
-import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI } from '../api/services'
+import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI, carpoolAPI } from '../api/services'
 
 type MarketplaceContextType = {
   products: Product[]
@@ -24,6 +24,20 @@ type MarketplaceContextType = {
   purchaseRequests: PurchaseRequest[]
   createPurchaseRequest: (productId: string, buyerId: string, sellerId: string) => Promise<PurchaseRequest>
   updatePurchaseRequest: (requestId: string, status: 'accepted' | 'declined') => Promise<void>
+  carpoolRides: CarpoolRide[]
+  refreshCarpools: () => Promise<void>
+  createCarpoolRide: (payload: {
+    title: string
+    destination: string
+    pickupPoint: string
+    capacity: number
+    departureDate: string
+    departureTime: string
+    direction: 'to_college' | 'from_college'
+    description?: string
+  }) => Promise<CarpoolRide>
+  sendCarpoolJoinRequest: (rideId: string) => Promise<CarpoolJoinRequest>
+  respondToCarpoolRequest: (requestId: string, status: 'accepted' | 'declined') => Promise<CarpoolJoinRequest>
   isHydrated: boolean
 }
 
@@ -56,6 +70,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null)
   const [chats, setChats] = useState<Chat[]>([])
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
+  const [carpoolRides, setCarpoolRides] = useState<CarpoolRide[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -66,6 +81,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         // Load products
         const productsResponse = await productsAPI.getAll()
         setProducts(productsResponse.data)
+
+        // Load carpools (now public, like products)
+        try {
+          const carpoolsResponse = await carpoolAPI.getAll()
+          setCarpoolRides(carpoolsResponse.data)
+        } catch (error) {
+          console.error('Failed to load initial carpools:', error)
+        }
 
         // Check for authenticated user token to load protected info
         const token = localStorage.getItem('auth_token')
@@ -98,6 +121,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
             const favoritesResponse = await favoritesAPI.getByUser(userData.id)
             const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
             setFavorites(userFavorites)
+
+            // Re-fetch carpools filtered by user's college now that we know the user
+            try {
+              const carpoolsResponse = await carpoolAPI.getAll()
+              setCarpoolRides(carpoolsResponse.data)
+            } catch (error) {
+              console.error('Failed to load college-filtered carpools:', error)
+            }
           } catch (error) {
             // Token invalid, clear auth data
             localStorage.removeItem('auth_token')
@@ -115,6 +146,77 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
 
     loadInitialData()
   }, [])
+
+  const refreshCarpools = useCallback(async () => {
+    try {
+      const response = await carpoolAPI.getAll()
+      setCarpoolRides(response.data)
+    } catch (error) {
+      console.error('Failed to refresh carpools:', error)
+    }
+  }, [])
+
+  const createCarpoolRide = async (payload: {
+    title: string
+    destination: string
+    pickupPoint: string
+    capacity: number
+    departureDate: string
+    departureTime: string
+    direction: 'to_college' | 'from_college'
+    description?: string
+  }) => {
+    try {
+      const response = await carpoolAPI.createRide(payload)
+      setCarpoolRides((prev) => [response.data, ...prev])
+      return response.data
+    } catch (error) {
+      console.error('Failed to create carpool ride:', error)
+      throw error
+    }
+  }
+
+  const sendCarpoolJoinRequest = async (rideId: string) => {
+    try {
+      const response = await carpoolAPI.createJoinRequest(rideId)
+      setCarpoolRides((prev) =>
+        prev.map((ride) => (ride.id === rideId ? { ...ride, joinRequests: [response.data, ...(ride.joinRequests || [])] } : ride))
+      )
+      return response.data
+    } catch (error) {
+      console.error('Failed to request carpool join:', error)
+      throw error
+    }
+  }
+
+  const respondToCarpoolRequest = async (requestId: string, status: 'accepted' | 'declined') => {
+    try {
+      const response = await carpoolAPI.updateJoinRequest(requestId, status)
+      const updatedRequest = response.data
+      setCarpoolRides((prev) =>
+        prev.map((ride) =>
+          ride.id === updatedRequest.rideId
+            ? {
+              ...ride,
+              joinRequests: ride.joinRequests?.map((req) => (req.id === updatedRequest.id ? updatedRequest : req)),
+              seatsAvailable:
+                status === 'accepted' && ride.seatsAvailable > 0
+                  ? Math.max(0, ride.seatsAvailable - 1)
+                  : ride.seatsAvailable,
+              participants:
+                status === 'accepted' && updatedRequest.requester
+                  ? [...ride.participants, updatedRequest.requester]
+                  : ride.participants,
+            }
+            : ride
+        )
+      )
+      return updatedRequest
+    } catch (error) {
+      console.error('Failed to update carpool request:', error)
+      throw error
+    }
+  }
 
   const addProduct = async (p: Omit<Product, 'id' | 'postedAt'>) => {
     try {
@@ -368,6 +470,11 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         purchaseRequests,
         createPurchaseRequest,
         updatePurchaseRequest,
+        carpoolRides,
+        refreshCarpools,
+        createCarpoolRide,
+        sendCarpoolJoinRequest,
+        respondToCarpoolRequest,
         isHydrated,
       }}
     >

@@ -28,7 +28,6 @@ type NavItem = {
 	path?: string
 	icon: ComponentType<{ size?: number }>
 	isActive?: (pathname: string) => boolean
-	comingSoon?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -42,9 +41,9 @@ const navItems: NavItem[] = [
   {
     key: 'carpool',
     label: 'CarPooling',
+    path: '/carpool',
     icon: CarpoolIcon,
-    comingSoon: true,
-    isActive: () => false,
+    isActive: (pathname: string) => pathname.startsWith('/carpool'),
   },
 ]
 
@@ -55,13 +54,9 @@ export default function FloatingBottomNav() {
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
       <div className="flex items-center gap-1.5 rounded-[26px] border border-white/10 bg-[rgba(7,10,20,0.82)] backdrop-blur-2xl px-2 py-1.5 shadow-[0_18px_40px_rgba(4,6,16,0.55)]">
-        {navItems.map(({ key, label, path, icon: Icon, isActive, comingSoon }) => {
+        {navItems.map(({ key, label, path, icon: Icon, isActive }) => {
           const active = Boolean(isActive?.(location.pathname))
           const handleClick = () => {
-            if (comingSoon) {
-              alert('CarPooling is coming soon!')
-              return
-            }
             if (path) navigate(path)
           }
           return (
@@ -78,8 +73,8 @@ export default function FloatingBottomNav() {
               <div className={`h-10 w-10 rounded-[18px] grid place-items-center border border-white/10 ${active ? 'bg-[rgba(255,255,255,0.15)] text-white' : 'bg-white/5 text-white/60'}`}>
                 <Icon size={18} />
               </div>
-              <span className={`text-sm font-medium tracking-tight ${comingSoon ? 'opacity-60' : ''} ${active ? 'px-1' : 'hidden'}`}>
-                {comingSoon ? `${label} · soon` : label}
+              <span className={`text-sm font-medium tracking-tight ${active ? 'px-1' : 'hidden'}`}>
+                {label}
               </span>
             </button>
           )

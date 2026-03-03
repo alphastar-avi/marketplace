@@ -81,8 +81,9 @@ func CreateChat(c *gin.Context) {
 		return
 	}
 
+	productID := requestData.ProductID
 	chat := models.Chat{
-		ProductID: requestData.ProductID,
+		ProductID: &productID,
 		CollegeID: product.CollegeID,
 	}
 
