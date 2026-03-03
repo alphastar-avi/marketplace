@@ -7,6 +7,7 @@ import (
 	"marketplace-backend/config"
 	"marketplace-backend/models"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -240,6 +241,51 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	log.Printf("Google Login Successful! Data: %v\n", userInfo)
 
-	// Redirect back to the React frontend signup page
-	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup")
+	// Extract email and name
+	email, _ := userInfo["email"].(string)
+	name, _ := userInfo["name"].(string)
+
+	if email == "" {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Could not extract email from Google")
+		return
+	}
+
+	// Extract Domain
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Invalid email format")
+		return
+	}
+	domain := parts[1]
+
+	// Lookup College to verify domain authorization
+	var college models.College
+	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Unrecognized College Domain. Please ask your administrator to register your college.")
+		return
+	}
+
+	// Check if this Google user already exists in our database
+	var existingUser models.User
+	if err := config.DB.Where("email = ?", email).First(&existingUser).Error; err == nil {
+		// User exists! Generate JWT and log them in
+		tokenString, errStr := generateJWT(existingUser.ID.String())
+		if errStr != nil {
+			c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Failed to generate token")
+			return
+		}
+
+		// Redirect to frontend login listener with the token
+		redirectURL := "http://localhost:5173/login?token=" + tokenString
+		c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		return
+	}
+
+	// Domain recognized! Redirect user to signup and autofill UI form fields via URL query strings
+	escapedEmail := url.QueryEscape(email)
+	escapedName := url.QueryEscape(name)
+	escapedCollege := url.QueryEscape(college.Name)
+
+	redirectURL := "http://localhost:5173/signup?email=" + escapedEmail + "&name=" + escapedName + "&college=" + escapedCollege
+	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }

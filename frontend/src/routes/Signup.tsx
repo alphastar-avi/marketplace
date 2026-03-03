@@ -1,19 +1,21 @@
 
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus, UserCheck } from 'lucide-react'
 import Dither from '../components/ui/Dither'
 
 export default function Signup() {
+  const [searchParams] = useSearchParams()
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: searchParams.get('name') || '',
+    email: searchParams.get('email') || '',
     password: '',
     year: '',
     department: '',
-    college: ''
+    college: searchParams.get('college') || ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
