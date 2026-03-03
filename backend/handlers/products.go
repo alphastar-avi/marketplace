@@ -16,9 +16,23 @@ import (
 // GetProducts returns all products for a college
 func GetProducts(c *gin.Context) {
 	var products []models.Product
+	// Get authenticated user ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		// Return empty list for unauthenticated viewers
+		c.JSON(http.StatusOK, []ProductDTO{})
+		return
+	}
 
-	// For now, get all products (later filter by college)
-	result := config.DB.Preload("Seller").Preload("College").Find(&products)
+	// Fetch user's CollegeID
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Filter products strictly by the user's college
+	result := config.DB.Where("college_id = ?", user.CollegeID).Preload("Seller").Preload("College").Order("created_at desc").Find(&products)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch products"})
 		return

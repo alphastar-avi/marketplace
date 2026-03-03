@@ -20,6 +20,12 @@ export type Product = {
   }
 }
 
+export type College = {
+  id: string
+  name: string
+  domain: string
+}
+
 export type UserType = {
   id: string
   name: string

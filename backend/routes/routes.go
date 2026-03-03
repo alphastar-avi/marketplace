@@ -21,6 +21,9 @@ func SetupRoutes(r *gin.Engine) {
 			auth.GET("/me", middleware.AuthMiddleware(), handlers.GetMe)
 		}
 
+		// Colleges routes (public)
+		api.GET("/colleges", handlers.GetColleges)
+
 		// Products routes
 		products := api.Group("/products")
 		{
