@@ -22,7 +22,8 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
         return participantId !== user?.id
       })
       const participantName = typeof otherParticipant === 'string' ? otherParticipant : (otherParticipant as any)?.name || ''
-      return product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      return (chat.name && chat.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        product?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         participantName.toLowerCase().includes(searchQuery.toLowerCase())
     })
     .sort((a, b) => {
@@ -55,6 +56,8 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
   }
 
   const getOtherParticipantName = (chat: any) => {
+    if (chat.name) return chat.name
+
     const otherParticipant = chat.participants.find((p: any) => {
       // Handle both string IDs and User objects
       const participantId = typeof p === 'string' ? p : p.id
@@ -157,7 +160,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
 
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-xs text-white/60 truncate">
-                          {productTitle}
+                          {chat.name ? 'Carpool Group' : productTitle}
                         </p>
                       </div>
 

@@ -50,10 +50,11 @@ export default function CarpoolRoute() {
 
   // ALL hooks must be called before any early return
   const displayRides = useMemo(() => {
-    let rides = carpoolRides
-    if (showOnlyMine && user) {
-      rides = rides.filter(ride => ride.owner.id === user.id)
-    }
+    if (!user) return carpoolRides
+    const rides = showOnlyMine
+      ? carpoolRides.filter(ride => ride.owner.id === user.id)
+      : carpoolRides.filter(ride => ride.owner.id !== user.id)
+
     return [...rides].sort((a, b) => new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime())
   }, [carpoolRides, showOnlyMine, user])
 
@@ -117,22 +118,32 @@ export default function CarpoolRoute() {
             <h1 className="text-3xl font-bold mt-2">Carpooling Hub</h1>
             <p className="text-sm text-white/70 mt-1">Share rides, split costs, and travel with classmates.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => refreshCarpools()}
-              className="px-4 py-2 rounded-full border border-white/10 text-sm flex items-center gap-2 hover:bg-white/5 transition text-white/70"
+              className="p-2 rounded-full border border-white/10 text-white/50 hover:bg-white/5 transition hover:text-white"
+              title="Refresh"
             >
-              <RefreshCw size={16} /> Refresh
+              <RefreshCw size={18} />
             </button>
-            <button
-              onClick={() => setShowOnlyMine(!showOnlyMine)}
-              className={`px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition ${showOnlyMine
-                ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]'
-                : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
-                }`}
-            >
-              <Users size={16} /> {showOnlyMine ? 'All Listings' : 'My Listings'}
-            </button>
+            <div className="flex bg-white/5 p-1 rounded-full border border-white/10">
+              <button
+                onClick={() => setShowOnlyMine(false)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${!showOnlyMine
+                  ? 'bg-white text-slate-900 shadow-[0_2px_10px_rgba(255,255,255,0.2)]'
+                  : 'text-white/50 hover:text-white'}`}
+              >
+                All Rides
+              </button>
+              <button
+                onClick={() => setShowOnlyMine(true)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${showOnlyMine
+                  ? 'bg-white text-slate-900 shadow-[0_2px_10px_rgba(255,255,255,0.2)]'
+                  : 'text-white/50 hover:text-white'}`}
+              >
+                My Listings
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,106 +153,118 @@ export default function CarpoolRoute() {
               <div className="h-16 w-16 rounded-full bg-white/5 grid place-items-center">
                 <Users size={32} className="opacity-20" />
               </div>
-              <p>{showOnlyMine ? "You haven't posted any rides yet." : "No rides yet. Be the first to create one!"}</p>
+              <p>
+                {showOnlyMine
+                  ? "You haven't posted any rides yet."
+                  : carpoolRides.length === 0
+                    ? "No rides yet. Be the first to create one!"
+                    : "No other rides available right now."
+                }
+              </p>
             </div>
           )}
-          {displayRides.map((ride) => (
-            <GlassCard key={ride.id}>
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-semibold">{ride.title}</h3>
-                      <span
-                        className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          }`}
-                      >
-                        {ride.direction === 'to_college' ? 'To College' : 'From College'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />{ride.destination} • {ride.pickupPoint}</p>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1"><Users size={16} />{ride.seatsAvailable} seats left</div>
-                    <div className="flex items-center gap-1"><Calendar size={16} />{new Date(ride.departureDate).toLocaleDateString()}</div>
-                    <div className="flex items-center gap-1"><Clock size={16} />{ride.departureTime}</div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-white/80 leading-relaxed">{ride.description || 'No description provided.'}</p>
-
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-white/10 grid place-items-center text-base font-semibold">
-                      {ride.owner?.name?.charAt(0) || 'O'}
-                    </div>
-                    <div>
-                      <div className="font-semibold">{ride.owner?.name || 'Unknown Owner'}</div>
-                      <div className="text-white/60 text-xs">Host</div>
-                    </div>
-                  </div>
-                  {ride.owner?.id === user.id ? (
-                    <div className="text-xs text-white/60">You created this ride</div>
-                  ) : (
-                    <button
-                      disabled={
-                        joinLoading === ride.id ||
-                        ride.seatsAvailable === 0 ||
-                        ride.participants?.some((p) => p.id === user.id) ||
-                        ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
-                      }
-                      onClick={() => handleJoin(ride.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${joinLoading === ride.id
-                        ? 'bg-white/10 text-white/60'
-                        : 'bg-white text-slate-900 hover:bg-white/90'
-                        }`}
-                    >
-                      {joinLoading === ride.id && <Loader2 className="animate-spin" size={16} />}
-                      {ride.participants?.some((p) => p.id === user.id)
-                        ? 'Joined'
-                        : ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
-                          ? 'Request Sent'
-                          : ride.seatsAvailable === 0
-                            ? 'Full'
-                            : 'Send Join Request'}
-                    </button>
-                  )}
-                </div>
-
-                {ride.owner?.id === user.id && (ride.joinRequests?.length ?? 0) > 0 && (
-                  <div className="rounded-xl border border-white/10 p-4 space-y-3 bg-white/5">
-                    <div className="text-sm font-semibold">Join Requests</div>
-                    {ride.joinRequests?.map((req) => (
-                      <div key={req.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
-                        <div>
-                          <div className="font-medium">{req.requester?.name || 'Unknown'}</div>
-                          <div className="text-white/60 text-xs">Status: {req.status}</div>
+          {displayRides.map((ride) => {
+            const isFull = ride.seatsAvailable === 0
+            return (
+              <div key={ride.id} className={`${isFull ? 'opacity-60 grayscale-[20%]' : ''} transition-all`}>
+                <GlassCard>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-semibold">{ride.title}{isFull && <span className="text-sm font-normal text-white/50 ml-2">( slots filled )</span>}</h3>
+                          <span
+                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
+                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              }`}
+                          >
+                            {ride.direction === 'to_college' ? 'To College' : 'From College'}
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            disabled={respondLoading === req.id || req.status === 'accepted'}
-                            onClick={() => handleRespond(req.id, 'accepted')}
-                            className="px-3 py-1 rounded-full bg-emerald-500/80 text-white text-xs"
-                          >
-                            {respondLoading === req.id ? '...' : 'Accept'}
-                          </button>
-                          <button
-                            disabled={respondLoading === req.id || req.status === 'declined'}
-                            onClick={() => handleRespond(req.id, 'declined')}
-                            className="px-3 py-1 rounded-full bg-red-500/70 text-white text-xs"
-                          >
-                            Decline
-                          </button>
+                        <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />To: {ride.destination} • From: {ride.pickupPoint}</p>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1"><Users size={16} />{ride.seatsAvailable} seats left</div>
+                        <div className="flex items-center gap-1"><Calendar size={16} />{new Date(ride.departureDate).toLocaleDateString()}</div>
+                        <div className="flex items-center gap-1"><Clock size={16} />{ride.departureTime}</div>
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-white/80 leading-relaxed">{ride.description || 'No description provided.'}</p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-white/10 grid place-items-center text-base font-semibold">
+                          {ride.owner?.name?.charAt(0) || 'O'}
+                        </div>
+                        <div>
+                          <div className="font-semibold">{ride.owner?.name || 'Unknown Owner'}</div>
+                          <div className="text-white/60 text-xs">Host</div>
                         </div>
                       </div>
-                    ))}
+                      {ride.owner?.id === user.id ? (
+                        <div className="text-xs text-white/60">You created this ride</div>
+                      ) : (
+                        <button
+                          disabled={
+                            joinLoading === ride.id ||
+                            ride.seatsAvailable === 0 ||
+                            ride.participants?.some((p) => p.id === user.id) ||
+                            ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
+                          }
+                          onClick={() => handleJoin(ride.id)}
+                          className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${joinLoading === ride.id
+                            ? 'bg-white/10 text-white/60'
+                            : 'bg-white text-slate-900 hover:bg-white/90'
+                            }`}
+                        >
+                          {joinLoading === ride.id && <Loader2 className="animate-spin" size={16} />}
+                          {ride.participants?.some((p) => p.id === user.id)
+                            ? 'Joined'
+                            : ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
+                              ? 'Request Sent'
+                              : ride.seatsAvailable === 0
+                                ? 'Full'
+                                : 'Send Join Request'}
+                        </button>
+                      )}
+                    </div>
+
+                    {ride.owner?.id === user.id && (ride.joinRequests?.length ?? 0) > 0 && (
+                      <div className="rounded-xl border border-white/10 p-4 space-y-3 bg-white/5">
+                        <div className="text-sm font-semibold">Join Requests</div>
+                        {ride.joinRequests?.map((req) => (
+                          <div key={req.id} className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                            <div>
+                              <div className="font-medium">{req.requester?.name || 'Unknown'}</div>
+                              <div className="text-white/60 text-xs">Status: {req.status}</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                disabled={respondLoading === req.id || req.status === 'accepted'}
+                                onClick={() => handleRespond(req.id, 'accepted')}
+                                className="px-3 py-1 rounded-full bg-emerald-500/80 text-white text-xs"
+                              >
+                                {respondLoading === req.id ? '...' : 'Accept'}
+                              </button>
+                              <button
+                                disabled={respondLoading === req.id || req.status === 'declined'}
+                                onClick={() => handleRespond(req.id, 'declined')}
+                                className="px-3 py-1 rounded-full bg-red-500/70 text-white text-xs"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                </GlassCard>
               </div>
-            </GlassCard>
-          ))}
+            )
+          })}
         </div>
       </div>
 
