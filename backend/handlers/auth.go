@@ -250,18 +250,19 @@ func GoogleAuthCallback(c *gin.Context) {
 		return
 	}
 
-	// Extract Domain
-	parts := strings.Split(email, "@")
-	if len(parts) != 2 {
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Invalid email format")
+	// Extract Domain from Google Workspace (hd)
+	hd, ok := userInfo["hd"].(string)
+	if !ok || hd == "" {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Please%20sign%20in%20with%20your%20official%20college%20email,%20not%20a%20personal%20account.")
 		return
 	}
-	domain := parts[1]
+
+	domain := hd
 
 	// Lookup College to verify domain authorization
 	var college models.College
 	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Unrecognized College Domain. Please ask your administrator to register your college.")
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Oops!%20It%20looks%20like%20your%20college%20isn't%20registered%20in%20the%20College%20Marketplace%20yet.%20Reach%20out%20to%20newcolleges@marketplace.com%20to%20get%20your%20campus%20added!")
 		return
 	}
 
