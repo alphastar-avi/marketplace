@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -252,7 +253,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	// Extract Domain from Google Workspace (hd)
 	hd, ok := userInfo["hd"].(string)
 	if !ok || hd == "" {
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Please%20sign%20in%20with%20your%20official%20college%20email,%20not%20a%20personal%20account.")
+		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Please sign in with your official college email, not a personal account.")), 60, "/", "localhost", false, false)
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
 		return
 	}
 
@@ -261,7 +263,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	// Lookup College to verify domain authorization
 	var college models.College
 	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Oops!%20It%20looks%20like%20your%20college%20isn't%20registered%20in%20the%20College%20Marketplace%20yet.%20Reach%20out%20to%20newcolleges@marketplace.com%20to%20get%20your%20campus%20added!")
+		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Oops! It looks like your college isn't registered in the College Marketplace yet. Reach out to newcolleges@marketplace.com to get your campus added!")), 60, "/", "localhost", false, false)
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
 		return
 	}
 
@@ -271,7 +274,8 @@ func GoogleAuthCallback(c *gin.Context) {
 		// User exists! Generate JWT and log them in
 		tokenString, errStr := generateJWT(existingUser.ID.String())
 		if errStr != nil {
-			c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Failed to generate token")
+			c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Failed to generate token")), 60, "/", "localhost", false, false)
+			c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
 			return
 		}
 

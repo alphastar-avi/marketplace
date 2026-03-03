@@ -20,6 +20,23 @@ export default function Login() {
 
   // Handle URL token injection for OAuth Users!
   useEffect(() => {
+    // Check for temporary cookie interceptor
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`
+      const parts = value.split(`; ${name}=`)
+      if (parts.length === 2) return parts.pop()?.split(';').shift()
+    }
+
+    const oauthError = getCookie('oauth_error')
+    if (oauthError) {
+      try {
+        setError(atob(oauthError))
+        document.cookie = 'oauth_error=; Max-Age=-99999999; path=/;'
+      } catch (err) {
+        console.error('Failed to parse oauth cookie', err)
+      }
+    }
+
     const token = searchParams.get('token')
     if (token) {
       setLoading(true)
