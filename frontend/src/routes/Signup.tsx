@@ -2,12 +2,26 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
-import { authAPI } from '../api/services'
+import { authAPI, collegesAPI } from '../api/services'
+import { College } from '../types'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus, UserCheck } from 'lucide-react'
 import Dither from '../components/ui/Dither'
 
 export default function Signup() {
   const [searchParams] = useSearchParams()
+  const [colleges, setColleges] = useState<College[]>([])
+
+  useEffect(() => {
+    const fetchColleges = async () => {
+      try {
+        const res = await collegesAPI.getAll()
+        setColleges(res.data)
+      } catch (err) {
+        console.error('Failed to fetch colleges:', err)
+      }
+    }
+    fetchColleges()
+  }, [])
 
   const [formData, setFormData] = useState({
     name: searchParams.get('name') || '',
@@ -33,6 +47,25 @@ export default function Signup() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    // Client-side domain validation
+    const emailParts = formData.email.split('@')
+    const domain = emailParts.length === 2 ? emailParts[1].toLowerCase() : ''
+
+    // Find selected college by name
+    const selectedCollege = colleges.find(c => c.name.toLowerCase() === formData.college.toLowerCase())
+
+    if (!selectedCollege && !searchParams.get('college')) {
+      setError('Please select a valid college.')
+      setLoading(false)
+      return
+    }
+
+    if (selectedCollege && domain !== selectedCollege.domain.toLowerCase()) {
+      setError(`Email doesn't belong to ${selectedCollege.name}`)
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await authAPI.register(formData)
@@ -224,17 +257,35 @@ export default function Signup() {
                   <label htmlFor="college" className="text-xs font-semibold uppercase tracking-wide text-white/60">
                     College Name
                   </label>
-                  <input
-                    id="college"
-                    name="college"
-                    type="text"
-                    value={formData.college}
-                    onChange={handleChange}
-                    required
-                    readOnly={!!searchParams.get('college')}
-                    placeholder="e.g. New York University"
-                    className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent ${searchParams.get('college') ? 'opacity-60 cursor-not-allowed cursor-default' : ''}`}
-                  />
+                  {searchParams.get('college') ? (
+                    <input
+                      id="college"
+                      name="college"
+                      type="text"
+                      value={formData.college}
+                      onChange={handleChange}
+                      required
+                      readOnly
+                      placeholder="e.g. New York University"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent opacity-60 cursor-not-allowed cursor-default"
+                    />
+                  ) : (
+                    <select
+                      id="college"
+                      name="college"
+                      value={formData.college}
+                      onChange={handleChange}
+                      required
+                      className="w-full appearance-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                    >
+                      <option value="" className="bg-[#030713]">Select College</option>
+                      {colleges.map((c) => (
+                        <option key={c.id} value={c.name} className="bg-[#030713]">
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 <button

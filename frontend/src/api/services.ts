@@ -1,5 +1,5 @@
 import api from './client'
-import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest } from '../types'
+import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest, College } from '../types'
 
 // Products API
 export const productsAPI = {
@@ -43,6 +43,11 @@ export const usersAPI = {
     }
     return api.put<UserType>(`/users/${id}`, user)
   },
+}
+
+// Colleges API
+export const collegesAPI = {
+  getAll: () => api.get<College[]>('/colleges'),
 }
 
 // Chats API

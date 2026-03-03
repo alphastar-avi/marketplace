@@ -69,18 +69,17 @@ func Register(c *gin.Context) {
 		domain = "unknown"
 	}
 
-	// Find or Create College
+	// Find College
 	var college models.College
-	if err := config.DB.Where("LOWER(name) = LOWER(?) OR LOWER(domain) = LOWER(?)", req.College, domain).First(&college).Error; err != nil {
-		// College not found, create it
-		college = models.College{
-			Name:   req.College,
-			Domain: domain,
-		}
-		if err := config.DB.Create(&college).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create college. Domain may already be taken."})
-			return
-		}
+	if err := config.DB.Where("LOWER(name) = LOWER(?)", req.College).First(&college).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid college selected."})
+		return
+	}
+
+	// Verify email domain matches the selected college's domain
+	if strings.ToLower(domain) != strings.ToLower(college.Domain) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email doesn't belong to " + college.Name})
+		return
 	}
 
 	// Create user
