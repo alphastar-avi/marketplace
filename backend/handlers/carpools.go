@@ -27,22 +27,25 @@ type updateJoinRequestStatus struct {
 	Status string `json:"status" binding:"required,oneof=accepted declined"`
 }
 
-// GetCarpoolRides lists rides for the authenticated user's college
+// GetCarpoolRides lists rides - filters by college if authenticated, returns all if not
 func GetCarpoolRides(c *gin.Context) {
-	user, err := getUserFromContext(c)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
 	var rides []models.CarpoolRide
-	if err := config.DB.
+
+	query := config.DB.
 		Preload("Owner").
 		Preload("Participants").
 		Preload("JoinRequests.Requester").
-		Where("college_id = ?", user.CollegeID).
-		Order("created_at DESC").
-		Find(&rides).Error; err != nil {
+		Order("created_at DESC")
+
+	// If authenticated, filter to user's college only
+	if userID, exists := c.Get("userID"); exists {
+		var user models.User
+		if err := config.DB.First(&user, userID).Error; err == nil {
+			query = query.Where("college_id = ?", user.CollegeID)
+		}
+	}
+
+	if err := query.Find(&rides).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch rides"})
 		return
 	}

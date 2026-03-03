@@ -81,6 +81,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         const productsResponse = await productsAPI.getAll()
         setProducts(productsResponse.data)
 
+        // Load carpools (now public, like products)
+        try {
+          const carpoolsResponse = await carpoolAPI.getAll()
+          setCarpoolRides(carpoolsResponse.data)
+        } catch (error) {
+          console.error('Failed to load initial carpools:', error)
+        }
+
         // Check for authenticated user token to load protected info
         const token = localStorage.getItem('auth_token')
         const savedUser = localStorage.getItem('user')
@@ -113,12 +121,12 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
             const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
             setFavorites(userFavorites)
 
-            // Load carpools (requires auth)
+            // Re-fetch carpools filtered by user's college now that we know the user
             try {
               const carpoolsResponse = await carpoolAPI.getAll()
               setCarpoolRides(carpoolsResponse.data)
             } catch (error) {
-              console.error('Failed to load initial carpools:', error)
+              console.error('Failed to load college-filtered carpools:', error)
             }
           } catch (error) {
             // Token invalid, clear auth data
