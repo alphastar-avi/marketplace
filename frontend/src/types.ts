@@ -41,6 +41,7 @@ export type Message = {
 
 export type Chat = {
   id: string
+  name?: string
   productId: string
   participants: string[]
   messages: Message[]
