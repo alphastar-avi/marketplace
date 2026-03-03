@@ -39,8 +39,12 @@ export default function CarpoolRoute() {
 
   useEffect(() => {
     if (!isHydrated) return
-    if (!user) navigate('/')
-  }, [user, navigate, isHydrated])
+    if (!user) {
+      navigate('/')
+      return
+    }
+    refreshCarpools()
+  }, [user, navigate, isHydrated, refreshCarpools])
 
   // ALL hooks must be called before any early return
   const sortedRides = useMemo(() => {
@@ -335,8 +339,8 @@ export default function CarpoolRoute() {
                 type="submit"
                 disabled={creating}
                 className={`w-full rounded-full py-2.5 font-semibold flex items-center justify-center gap-2 transition ${creating
-                    ? 'bg-white/40 text-slate-900/60 cursor-not-allowed'
-                    : 'bg-white text-slate-900 hover:bg-white/90 cursor-pointer'
+                  ? 'bg-white/40 text-slate-900/60 cursor-not-allowed'
+                  : 'bg-white text-slate-900 hover:bg-white/90 cursor-pointer'
                   }`}
               >
                 {creating && <Loader2 className="animate-spin" size={18} />}

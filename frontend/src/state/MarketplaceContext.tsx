@@ -112,6 +112,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
             const favoritesResponse = await favoritesAPI.getByUser(userData.id)
             const userFavorites = favoritesResponse.data.map((fav: any) => fav.product_id)
             setFavorites(userFavorites)
+
+            // Load carpools (requires auth)
+            try {
+              const carpoolsResponse = await carpoolAPI.getAll()
+              setCarpoolRides(carpoolsResponse.data)
+            } catch (error) {
+              console.error('Failed to load initial carpools:', error)
+            }
           } catch (error) {
             // Token invalid, clear auth data
             localStorage.removeItem('auth_token')
