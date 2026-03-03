@@ -182,7 +182,7 @@ export default function CarpoolRoute() {
                             {ride.direction === 'to_college' ? 'To College' : 'From College'}
                           </span>
                         </div>
-                        <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />{ride.destination} • {ride.pickupPoint}</p>
+                        <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />To: {ride.destination} • From: {ride.pickupPoint}</p>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center gap-1"><Users size={16} />{ride.seatsAvailable} seats left</div>
