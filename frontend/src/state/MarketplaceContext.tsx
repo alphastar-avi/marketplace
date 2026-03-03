@@ -27,6 +27,7 @@ type MarketplaceContextType = {
   carpoolRides: CarpoolRide[]
   refreshCarpools: () => Promise<void>
   createCarpoolRide: (payload: {
+    title: string
     destination: string
     pickupPoint: string
     capacity: number
@@ -156,6 +157,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const createCarpoolRide = async (payload: {
+    title: string
     destination: string
     pickupPoint: string
     capacity: number

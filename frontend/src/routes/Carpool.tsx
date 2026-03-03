@@ -10,6 +10,7 @@ import { useMarketplace } from '../state/MarketplaceContext'
 import type { CarpoolRide, CarpoolJoinRequest } from '../types'
 
 const emptyForm = {
+  title: '',
   destination: '',
   pickupPoint: '',
   capacity: 3,
@@ -32,6 +33,7 @@ export default function CarpoolRoute() {
   } = useMarketplace()
 
   const [showCreate, setShowCreate] = useState(false)
+  const [showOnlyMine, setShowOnlyMine] = useState(false)
   const [creating, setCreating] = useState(false)
   const [joinLoading, setJoinLoading] = useState<string | null>(null)
   const [respondLoading, setRespondLoading] = useState<string | null>(null)
@@ -47,11 +49,15 @@ export default function CarpoolRoute() {
   }, [user, navigate, isHydrated, refreshCarpools])
 
   // ALL hooks must be called before any early return
-  const sortedRides = useMemo(() => {
-    return [...carpoolRides].sort((a, b) => new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime())
-  }, [carpoolRides])
+  const displayRides = useMemo(() => {
+    let rides = carpoolRides
+    if (showOnlyMine && user) {
+      rides = rides.filter(ride => ride.owner.id === user.id)
+    }
+    return [...rides].sort((a, b) => new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime())
+  }, [carpoolRides, showOnlyMine, user])
 
-  const canSubmit = form.destination && form.pickupPoint && form.capacity > 0 && form.departureDate && form.departureTime && form.direction
+  const canSubmit = form.title && form.destination && form.pickupPoint && form.capacity > 0 && form.departureDate && form.departureTime && form.direction
 
   if (!isHydrated || !user) {
     return (
@@ -114,30 +120,38 @@ export default function CarpoolRoute() {
           <div className="flex gap-3">
             <button
               onClick={() => refreshCarpools()}
-              className="px-4 py-2 rounded-full border border-white/10 text-sm flex items-center gap-2 hover:bg-white/5 transition"
+              className="px-4 py-2 rounded-full border border-white/10 text-sm flex items-center gap-2 hover:bg-white/5 transition text-white/70"
             >
               <RefreshCw size={16} /> Refresh
             </button>
             <button
-              onClick={() => setShowCreate(true)}
-              className="px-4 py-2 rounded-full bg-white/90 text-slate-900 font-semibold flex items-center gap-2"
+              onClick={() => setShowOnlyMine(!showOnlyMine)}
+              className={`px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition ${showOnlyMine
+                ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.4)]'
+                : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
+                }`}
             >
-              <Plus size={16} /> Create Ride
+              <Users size={16} /> {showOnlyMine ? 'All Listings' : 'My Listings'}
             </button>
           </div>
         </div>
 
         <div className="grid gap-4">
-          {sortedRides.length === 0 && (
-            <div className="p-6 rounded-2xl bg-white/5 text-center text-white/70">No rides yet. Be the first to create one!</div>
+          {displayRides.length === 0 && (
+            <div className="p-12 rounded-2xl bg-white/5 border border-white/5 text-center text-white/50 flex flex-col items-center gap-4">
+              <div className="h-16 w-16 rounded-full bg-white/5 grid place-items-center">
+                <Users size={32} className="opacity-20" />
+              </div>
+              <p>{showOnlyMine ? "You haven't posted any rides yet." : "No rides yet. Be the first to create one!"}</p>
+            </div>
           )}
-          {sortedRides.map((ride) => (
+          {displayRides.map((ride) => (
             <GlassCard key={ride.id}>
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-xl font-semibold">{ride.destination}</h3>
+                      <h3 className="text-xl font-semibold">{ride.title}</h3>
                       <span
                         className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
                           ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
@@ -147,7 +161,7 @@ export default function CarpoolRoute() {
                         {ride.direction === 'to_college' ? 'To College' : 'From College'}
                       </span>
                     </div>
-                    <p className="text-sm text-white/70">Pickup at {ride.pickupPoint}</p>
+                    <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />{ride.destination} • {ride.pickupPoint}</p>
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1"><Users size={16} />{ride.seatsAvailable} seats left</div>
@@ -261,6 +275,16 @@ export default function CarpoolRoute() {
               </div>
 
               <div className="grid gap-3">
+                <label className="text-sm text-white/70">
+                  Ride Title
+                  <input
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 outline-none focus:border-white/30 transition"
+                    placeholder="e.g., Morning commute to BITS"
+                    required
+                  />
+                </label>
                 <label className="text-sm text-white/70">
                   Direction
                   <select

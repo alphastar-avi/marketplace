@@ -59,6 +59,7 @@ func CarpoolRideDTOFromModel(ride *models.CarpoolRide) *CarpoolRideDTO {
 
 	return &CarpoolRideDTO{
 		ID:             ride.ID.String(),
+		Title:          ride.Title,
 		Destination:    ride.Destination,
 		PickupPoint:    ride.PickupPoint,
 		Capacity:       ride.Capacity,
@@ -99,6 +100,7 @@ type SellerDTO struct {
 // CarpoolRideDTO represents a ride payload for API responses
 type CarpoolRideDTO struct {
 	ID             string                   `json:"id"`
+	Title          string                   `json:"title"`
 	Destination    string                   `json:"destination"`
 	PickupPoint    string                   `json:"pickupPoint"`
 	Capacity       int                      `json:"capacity"`

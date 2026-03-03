@@ -14,6 +14,7 @@ import (
 )
 
 type createCarpoolRideRequest struct {
+	Title         string `json:"title" binding:"required"`
 	Destination   string `json:"destination" binding:"required"`
 	PickupPoint   string `json:"pickupPoint" binding:"required"`
 	Capacity      int    `json:"capacity" binding:"required,min=1"`
@@ -100,6 +101,7 @@ func CreateCarpoolRide(c *gin.Context) {
 	}
 
 	ride := models.CarpoolRide{
+		Title:          req.Title,
 		Destination:    req.Destination,
 		PickupPoint:    req.PickupPoint,
 		Capacity:       req.Capacity,

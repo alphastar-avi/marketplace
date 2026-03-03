@@ -78,6 +78,7 @@ export const carpoolAPI = {
   getAll: () => api.get<CarpoolRide[]>('/carpools'),
   getById: (id: string) => api.get<CarpoolRide>(`/carpools/${id}`),
   createRide: (payload: {
+    title: string
     destination: string
     pickupPoint: string
     capacity: number

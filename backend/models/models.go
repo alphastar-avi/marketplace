@@ -106,6 +106,7 @@ type Favorite struct {
 // CarpoolRide represents a ride offer created by a user
 type CarpoolRide struct {
 	ID             uuid.UUID            `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Title          string               `json:"title" gorm:"not null"`
 	Destination    string               `json:"destination" gorm:"not null"`
 	PickupPoint    string               `json:"pickup_point" gorm:"not null"`
 	Capacity       int                  `json:"capacity" gorm:"not null"`

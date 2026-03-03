@@ -65,6 +65,7 @@ export type CarpoolJoinRequest = {
 
 export type CarpoolRide = {
   id: string
+  title: string
   destination: string
   pickupPoint: string
   capacity: number
