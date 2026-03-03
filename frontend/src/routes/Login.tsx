@@ -37,7 +37,7 @@ export default function Login() {
   }
 
   const handleGoogle = () => {
-    console.info('Google SSO placeholder clicked')
+    window.location.href = 'http://localhost:8080/api/auth/google/login'
   }
 
   const handleMicrosoft = () => {
