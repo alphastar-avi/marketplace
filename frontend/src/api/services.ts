@@ -94,9 +94,9 @@ export const carpoolAPI = {
 
 // Auth API
 export const authAPI = {
+  getMe: () => api.get<UserType>('/auth/me'),
   login: (credentials: { email: string; password: string }) =>
     api.post('/auth/login', credentials),
   register: (userData: { name: string; email: string; password: string; year?: string; department?: string; college: string }) =>
     api.post('/auth/register', userData),
-  getMe: () => api.get('/auth/me'),
 }

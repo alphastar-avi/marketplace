@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
+	"io"
+	"log"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -11,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type LoginRequest struct {
@@ -177,4 +183,110 @@ func generateJWT(userID string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+}
+
+// ---------- GOOGLE OAUTH FLOW ----------
+
+var googleOauthConfig = &oauth2.Config{
+	RedirectURL:  "http://localhost:8080/api/auth/google/callback", // Or os.Getenv("GOOGLE_CALLBACK_URL")
+	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
+	Endpoint:     google.Endpoint,
+}
+
+const oauthStateString = "randomized-secret-key-for-state"
+
+// GoogleAuthLogin instantly redirects the user to the Google Consent Screen
+func GoogleAuthLogin(c *gin.Context) {
+	googleOauthConfig.ClientID = os.Getenv("GOOGLE_CLIENT_ID")
+	googleOauthConfig.ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	googleOauthConfig.RedirectURL = os.Getenv("GOOGLE_CALLBACK_URL")
+
+	url := googleOauthConfig.AuthCodeURL(oauthStateString)
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+// GoogleAuthCallback is the temporary testing endpoint that fetches Google User Data and prints it
+func GoogleAuthCallback(c *gin.Context) {
+	state := c.Query("state")
+	if state != oauthStateString {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid oauth state"})
+		return
+	}
+
+	code := c.Query("code")
+	token, err := googleOauthConfig.Exchange(c, code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "code exchange failed: " + err.Error()})
+		return
+	}
+
+	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed getting user info: " + err.Error()})
+		return
+	}
+	defer response.Body.Close()
+
+	contents, err := io.ReadAll(response.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed reading response body: " + err.Error()})
+		return
+	}
+
+	// Dump the raw JSON bytes from Google straight to the backend terminal
+	var userInfo map[string]interface{}
+	json.Unmarshal(contents, &userInfo)
+
+	log.Printf("Google Login Successful! Data: %v\n", userInfo)
+
+	// Extract email and name
+	email, _ := userInfo["email"].(string)
+	name, _ := userInfo["name"].(string)
+
+	if email == "" {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Could not extract email from Google")
+		return
+	}
+
+	// Extract Domain from Google Workspace (hd)
+	hd, ok := userInfo["hd"].(string)
+	if !ok || hd == "" {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Please%20sign%20in%20with%20your%20official%20college%20email,%20not%20a%20personal%20account.")
+		return
+	}
+
+	domain := hd
+
+	// Lookup College to verify domain authorization
+	var college models.College
+	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
+		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Oops!%20It%20looks%20like%20your%20college%20isn't%20registered%20in%20the%20College%20Marketplace%20yet.%20Reach%20out%20to%20newcolleges@marketplace.com%20to%20get%20your%20campus%20added!")
+		return
+	}
+
+	// Check if this Google user already exists in our database
+	var existingUser models.User
+	if err := config.DB.Where("email = ?", email).First(&existingUser).Error; err == nil {
+		// User exists! Generate JWT and log them in
+		tokenString, errStr := generateJWT(existingUser.ID.String())
+		if errStr != nil {
+			c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login?error=Failed to generate token")
+			return
+		}
+
+		// Redirect to frontend login listener with the token
+		redirectURL := "http://localhost:5173/login?token=" + tokenString
+		c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+		return
+	}
+
+	// Domain recognized! Redirect user to signup and autofill UI form fields via URL query strings
+	escapedEmail := url.QueryEscape(email)
+	escapedName := url.QueryEscape(name)
+	escapedCollege := url.QueryEscape(college.Name)
+
+	redirectURL := "http://localhost:5173/signup?email=" + escapedEmail + "&name=" + escapedName + "&college=" + escapedCollege
+	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }

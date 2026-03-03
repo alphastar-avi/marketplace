@@ -1,19 +1,21 @@
 
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus, UserCheck } from 'lucide-react'
 import Dither from '../components/ui/Dither'
 
 export default function Signup() {
+  const [searchParams] = useSearchParams()
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: searchParams.get('name') || '',
+    email: searchParams.get('email') || '',
     password: '',
     year: '',
     department: '',
-    college: ''
+    college: searchParams.get('college') || ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -158,8 +160,9 @@ export default function Signup() {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    readOnly={!!searchParams.get('email')}
                     placeholder="student@college.edu"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                    className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent ${searchParams.get('email') ? 'opacity-60 cursor-not-allowed cursor-default' : ''}`}
                   />
                 </div>
 
@@ -228,8 +231,9 @@ export default function Signup() {
                     value={formData.college}
                     onChange={handleChange}
                     required
+                    readOnly={!!searchParams.get('college')}
                     placeholder="e.g. New York University"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent"
+                    className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-transparent ${searchParams.get('college') ? 'opacity-60 cursor-not-allowed cursor-default' : ''}`}
                   />
                 </div>
 
