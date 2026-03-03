@@ -1,5 +1,5 @@
 import api from './client'
-import { Product, UserType, Chat, Message, PurchaseRequest } from '../types'
+import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest } from '../types'
 
 // Products API
 export const productsAPI = {
@@ -73,11 +73,30 @@ export const favoritesAPI = {
     api.delete(`/favorites/${productId}?user_id=${userId}`),
 }
 
+// Carpool API
+export const carpoolAPI = {
+  getAll: () => api.get<CarpoolRide[]>('/carpools'),
+  getById: (id: string) => api.get<CarpoolRide>(`/carpools/${id}`),
+  createRide: (payload: {
+    title: string
+    destination: string
+    pickupPoint: string
+    capacity: number
+    departureDate: string
+    departureTime: string
+    direction: 'to_college' | 'from_college'
+    description?: string
+  }) => api.post<CarpoolRide>('/carpools', payload),
+  createJoinRequest: (rideId: string) => api.post<CarpoolJoinRequest>(`/carpools/${rideId}/requests`, {}),
+  updateJoinRequest: (requestId: string, status: 'accepted' | 'declined') =>
+    api.put<CarpoolJoinRequest>(`/carpools/requests/${requestId}`, { status }),
+}
+
 // Auth API
 export const authAPI = {
+  getMe: () => api.get<UserType>('/auth/me'),
   login: (credentials: { email: string; password: string }) =>
     api.post('/auth/login', credentials),
   register: (userData: { name: string; email: string; password: string; year?: string; department?: string; college: string }) =>
     api.post('/auth/register', userData),
-  getMe: () => api.get('/auth/me'),
 }

@@ -1,18 +1,44 @@
-import React, { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useRef, useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus } from 'lucide-react'
 import Dither from '../components/ui/Dither'
 
 export default function Login() {
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(searchParams.get('error') || '')
   const { setUser } = useMarketplace()
   const navigate = useNavigate()
   const emailInputRef = useRef<HTMLInputElement>(null)
+
+  // Fast check: Is this environment running locally or in Azure Production?
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
+  // Handle URL token injection for OAuth Users!
+  useEffect(() => {
+    const token = searchParams.get('token')
+    if (token) {
+      setLoading(true)
+      localStorage.setItem('auth_token', token)
+
+      authAPI.getMe()
+        .then(res => {
+          localStorage.setItem('user', JSON.stringify(res.data))
+          setUser(res.data)
+          navigate('/marketplace')
+        })
+        .catch(() => {
+          localStorage.removeItem('auth_token')
+          setError('Google Authentication Failed. Please sign in normally.')
+          setLoading(false)
+          navigate('/login')
+        })
+    }
+  }, [searchParams, navigate, setUser])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +63,7 @@ export default function Login() {
   }
 
   const handleGoogle = () => {
-    console.info('Google SSO placeholder clicked')
+    window.location.href = 'http://localhost:8080/api/auth/google/login'
   }
 
   const handleMicrosoft = () => {
@@ -103,16 +129,17 @@ export default function Login() {
               <button
                 type="button"
                 onClick={handleGoogle}
-                className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/10"
+                disabled={!isLocalhost}
+                className={`group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition ${isLocalhost ? 'hover:border-white/30 hover:bg-white/10' : 'opacity-40 cursor-not-allowed'}`}
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5ff]/10 text-sm font-semibold text-white">
                   <Chrome size={18} />
                 </span>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-white">Continue with Google</p>
-                  <p className="text-xs text-white/50">Single sign-on</p>
+                  <p className="text-xs text-white/50">{isLocalhost ? 'Single sign-on' : 'Temporarily disabled in production'}</p>
                 </div>
-                <ArrowRight size={16} className="text-white/40 group-hover:text-white/70" />
+                {isLocalhost && <ArrowRight size={16} className="text-white/40 group-hover:text-white/70" />}
               </button>
 
               <button

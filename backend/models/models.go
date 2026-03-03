@@ -38,10 +38,10 @@ type Product struct {
 	Title       string    `json:"title" gorm:"not null"`
 	Price       float64   `json:"price" gorm:"not null"`
 	Description string    `json:"description"`
-	Images      string    `json:"images" gorm:"type:text"` // JSON string for now
+	Images      string    `json:"images" gorm:"type:text"`   // JSON string for now
 	Condition   string    `json:"condition" gorm:"not null"` // New, Like New, Good, Fair, For Parts
 	Category    string    `json:"category" gorm:"not null"`
-	Tags        string    `json:"tags" gorm:"type:text"` // JSON string for now
+	Tags        string    `json:"tags" gorm:"type:text"`             // JSON string for now
 	Status      string    `json:"status" gorm:"default:'available'"` // available, requested, sold
 	SellerID    uuid.UUID `json:"seller_id" gorm:"type:uuid;not null"`
 	Seller      User      `json:"seller" gorm:"foreignKey:SellerID"`
@@ -53,15 +53,17 @@ type Product struct {
 
 // Chat represents a conversation between users
 type Chat struct {
-	ID           uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	ProductID    uuid.UUID `json:"product_id" gorm:"type:uuid;not null"`
-	Product      Product   `json:"product" gorm:"foreignKey:ProductID"`
-	Participants []User    `json:"participants" gorm:"many2many:chat_participants;"`
-	Messages     []Message `json:"messages" gorm:"foreignKey:ChatID"`
-	CollegeID    uuid.UUID `json:"college_id" gorm:"type:uuid;not null"`
-	College      College   `json:"college" gorm:"foreignKey:CollegeID"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            uuid.UUID    `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ProductID     *uuid.UUID   `json:"product_id" gorm:"type:uuid"`
+	Product       *Product     `json:"product" gorm:"foreignKey:ProductID"`
+	CarpoolRideID *uuid.UUID   `json:"carpool_ride_id" gorm:"type:uuid"`
+	CarpoolRide   *CarpoolRide `json:"carpool_ride" gorm:"foreignKey:CarpoolRideID"`
+	Participants  []User       `json:"participants" gorm:"many2many:chat_participants;"`
+	Messages      []Message    `json:"messages" gorm:"foreignKey:ChatID"`
+	CollegeID     uuid.UUID    `json:"college_id" gorm:"type:uuid;not null"`
+	College       College      `json:"college" gorm:"foreignKey:CollegeID"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
 // Message represents a chat message
@@ -99,6 +101,42 @@ type Favorite struct {
 	ProductID uuid.UUID `json:"product_id" gorm:"type:uuid;not null"`
 	Product   Product   `json:"product" gorm:"foreignKey:ProductID"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+// CarpoolRide represents a ride offer created by a user
+type CarpoolRide struct {
+	ID             uuid.UUID            `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Title          string               `json:"title" gorm:"not null"`
+	Destination    string               `json:"destination" gorm:"not null"`
+	PickupPoint    string               `json:"pickup_point" gorm:"not null"`
+	Capacity       int                  `json:"capacity" gorm:"not null"`
+	SeatsAvailable int                  `json:"seats_available" gorm:"not null"`
+	DepartureDate  time.Time            `json:"departure_date" gorm:"not null"`
+	DepartureTime  string               `json:"departure_time" gorm:"not null"`
+	Direction      string               `json:"direction" gorm:"not null;default:'to_college'"`
+	Description    string               `json:"description" gorm:"type:text"`
+	OwnerID        uuid.UUID            `json:"owner_id" gorm:"type:uuid;not null"`
+	Owner          User                 `json:"owner" gorm:"foreignKey:OwnerID"`
+	CollegeID      uuid.UUID            `json:"college_id" gorm:"type:uuid;not null"`
+	College        College              `json:"college" gorm:"foreignKey:CollegeID"`
+	ChatID         *uuid.UUID           `json:"chat_id" gorm:"type:uuid"`
+	Chat           *Chat                `json:"chat" gorm:"foreignKey:ChatID"`
+	Participants   []User               `json:"participants" gorm:"many2many:carpool_participants;"`
+	JoinRequests   []CarpoolJoinRequest `json:"join_requests" gorm:"foreignKey:RideID"`
+	CreatedAt      time.Time            `json:"created_at"`
+	UpdatedAt      time.Time            `json:"updated_at"`
+}
+
+// CarpoolJoinRequest represents a user's request to join a ride
+type CarpoolJoinRequest struct {
+	ID          uuid.UUID   `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	RideID      uuid.UUID   `json:"ride_id" gorm:"type:uuid;not null"`
+	Ride        CarpoolRide `json:"ride" gorm:"foreignKey:RideID"`
+	RequesterID uuid.UUID   `json:"requester_id" gorm:"type:uuid;not null"`
+	Requester   User        `json:"requester" gorm:"foreignKey:RequesterID"`
+	Status      string      `json:"status" gorm:"default:'pending'"`
+	CreatedAt   time.Time   `json:"created_at"`
+	UpdatedAt   time.Time   `json:"updated_at"`
 }
 
 // BeforeCreate hooks for UUID generation
@@ -140,6 +178,23 @@ func (pr *PurchaseRequest) BeforeCreate(tx *gorm.DB) error {
 func (f *Favorite) BeforeCreate(tx *gorm.DB) error {
 	if f.ID == uuid.Nil {
 		f.ID = uuid.New()
+	}
+	return nil
+}
+
+func (r *CarpoolRide) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	if r.SeatsAvailable == 0 {
+		r.SeatsAvailable = r.Capacity
+	}
+	return nil
+}
+
+func (cr *CarpoolJoinRequest) BeforeCreate(tx *gorm.DB) error {
+	if cr.ID == uuid.Nil {
+		cr.ID = uuid.New()
 	}
 	return nil
 }

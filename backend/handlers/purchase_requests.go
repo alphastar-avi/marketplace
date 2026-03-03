@@ -77,7 +77,7 @@ func CreatePurchaseRequest(c *gin.Context) {
 
 	if !chatExists {
 		chat := models.Chat{
-			ProductID: request.ProductID,
+			ProductID: &request.ProductID,
 			CollegeID: product.CollegeID,
 		}
 		if err := config.DB.Create(&chat).Error; err == nil {
