@@ -83,6 +83,7 @@ export const carpoolAPI = {
     capacity: number
     departureDate: string
     departureTime: string
+    direction: 'to_college' | 'from_college'
     description?: string
   }) => api.post<CarpoolRide>('/carpools', payload),
   createJoinRequest: (rideId: string) => api.post<CarpoolJoinRequest>(`/carpools/${rideId}/requests`, {}),

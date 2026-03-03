@@ -42,6 +42,13 @@ export default function CarpoolRoute() {
     if (!user) navigate('/')
   }, [user, navigate, isHydrated])
 
+  // ALL hooks must be called before any early return
+  const sortedRides = useMemo(() => {
+    return [...carpoolRides].sort((a, b) => new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime())
+  }, [carpoolRides])
+
+  const canSubmit = form.destination && form.pickupPoint && form.capacity > 0 && form.departureDate && form.departureTime && form.direction
+
   if (!isHydrated || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans flex items-center justify-center">
@@ -52,10 +59,6 @@ export default function CarpoolRoute() {
       </div>
     )
   }
-
-  const sortedRides = useMemo(() => {
-    return [...carpoolRides].sort((a, b) => new Date(a.departureDate).getTime() - new Date(b.departureDate).getTime())
-  }, [carpoolRides])
 
   const onCreateRide = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,8 +98,6 @@ export default function CarpoolRoute() {
     }
   }
 
-  const canSubmit = form.destination && form.pickupPoint && form.capacity > 0 && form.departureDate && form.departureTime
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans pb-32">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-8">
@@ -135,8 +136,8 @@ export default function CarpoolRoute() {
                       <h3 className="text-xl font-semibold">{ride.destination}</h3>
                       <span
                         className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
-                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                           }`}
                       >
                         {ride.direction === 'to_college' ? 'To College' : 'From College'}
@@ -332,11 +333,14 @@ export default function CarpoolRoute() {
 
               <button
                 type="submit"
-                disabled={!canSubmit || creating}
-                className="w-full rounded-full bg-white text-slate-900 py-2.5 font-semibold flex items-center justify-center gap-2"
+                disabled={creating}
+                className={`w-full rounded-full py-2.5 font-semibold flex items-center justify-center gap-2 transition ${creating
+                    ? 'bg-white/40 text-slate-900/60 cursor-not-allowed'
+                    : 'bg-white text-slate-900 hover:bg-white/90 cursor-pointer'
+                  }`}
               >
                 {creating && <Loader2 className="animate-spin" size={18} />}
-                Publish Ride
+                {creating ? 'Publishing...' : 'Publish Ride'}
               </button>
             </motion.form>
           </motion.div>
