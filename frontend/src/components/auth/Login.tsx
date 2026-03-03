@@ -13,18 +13,15 @@ export default function Login({ onLogin }: { onLogin?: () => void }) {
   const [otpSent, setOtpSent] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', otp: '' })
 
-  const handleSignInClick = (provider: 'google' | 'microsoft' | 'admin' | 'demo') => {
-    if (provider === 'google') {
-      return
-    }
+  const handleSignInClick = (provider: 'microsoft' | 'admin' | 'demo') => {
     if (provider === 'admin') {
       setShowAdminForm(true)
       setForm((prev) => ({ ...prev, email: 'admin@gmail.com' }))
       return
     }
     const info = provider === 'microsoft'
-      ? { id: uid('u'), name: 'Microsoft User', email: 'user@outlook.com', avatar: 'https://via.placeholder.com/150', role: 'user' }
-      : { id: uid('u'), name: 'Demo User', email: 'demo@example.com', avatar: 'https://via.placeholder.com/150', role: 'user' }
+      ? { id: uid('u'), name: 'Microsoft User', email: 'user@outlook.com', avatar: 'https://via.placeholder.com/150' }
+      : { id: uid('u'), name: 'Demo User', email: 'demo@example.com', avatar: 'https://via.placeholder.com/150' }
 
     updateUser(info)
     onLogin?.()
@@ -40,7 +37,7 @@ export default function Login({ onLogin }: { onLogin?: () => void }) {
       setTimeout(() => {
         const emailLower = form.email.toLowerCase()
         if (emailLower === 'admin@gmail.com') {
-          updateUser({ id: uid('u'), name: form.email.split('@')[0], email: form.email, avatar: 'https://via.placeholder.com/150', role: 'admin' })
+          updateUser({ id: uid('u'), name: form.email.split('@')[0], email: form.email, avatar: 'https://via.placeholder.com/150' })
           setLoading(false)
           onLogin?.()
           return
@@ -62,7 +59,7 @@ export default function Login({ onLogin }: { onLogin?: () => void }) {
                   <div className="space-y-4">
                     <p className="font-semibold">Sign in</p>
                     <div className="flex gap-3">
-                      <button onClick={() => handleSignInClick('google')} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8" title="Google sign-in disabled">
+                      <button onClick={() => { console.log('Firing Google redirect...'); window.location.href = 'http://localhost:8080/api/auth/google/login' }} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8">
                         <Chrome size={16} /> <span className="text-sm">Google</span>
                       </button>
                       <button onClick={() => handleSignInClick('microsoft')} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8">

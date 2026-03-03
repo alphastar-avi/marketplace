@@ -55,4 +55,30 @@ export type PurchaseRequest = {
   createdAt: string
 }
 
+export type CarpoolJoinRequest = {
+  id: string
+  rideId: string
+  requester: UserType
+  status: 'pending' | 'accepted' | 'declined'
+  createdAt: string
+}
+
+export type CarpoolRide = {
+  id: string
+  title: string
+  destination: string
+  pickupPoint: string
+  capacity: number
+  seatsAvailable: number
+  departureDate: string
+  departureTime: string
+  direction: 'to_college' | 'from_college'
+  description: string
+  owner: UserType
+  participants: UserType[]
+  chatId?: string
+  joinRequests?: CarpoolJoinRequest[]
+  createdAt: string
+}
+
 
