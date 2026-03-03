@@ -19,6 +19,7 @@ type createCarpoolRideRequest struct {
 	Capacity      int    `json:"capacity" binding:"required,min=1"`
 	DepartureDate string `json:"departureDate" binding:"required"`
 	DepartureTime string `json:"departureTime" binding:"required"`
+	Direction     string `json:"direction" binding:"required,oneof=to_college from_college"`
 	Description   string `json:"description"`
 }
 
@@ -102,6 +103,7 @@ func CreateCarpoolRide(c *gin.Context) {
 		SeatsAvailable: req.Capacity,
 		DepartureDate:  departureDate,
 		DepartureTime:  req.DepartureTime,
+		Direction:      req.Direction,
 		Description:    req.Description,
 		OwnerID:        user.ID,
 		CollegeID:      user.CollegeID,

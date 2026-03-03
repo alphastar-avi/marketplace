@@ -112,6 +112,7 @@ type CarpoolRide struct {
 	SeatsAvailable int                  `json:"seats_available" gorm:"not null"`
 	DepartureDate  time.Time            `json:"departure_date" gorm:"not null"`
 	DepartureTime  string               `json:"departure_time" gorm:"not null"`
+	Direction      string               `json:"direction" gorm:"not null;default:'to_college'"`
 	Description    string               `json:"description" gorm:"type:text"`
 	OwnerID        uuid.UUID            `json:"owner_id" gorm:"type:uuid;not null"`
 	Owner          User                 `json:"owner" gorm:"foreignKey:OwnerID"`

@@ -32,6 +32,7 @@ type MarketplaceContextType = {
     capacity: number
     departureDate: string
     departureTime: string
+    direction: 'to_college' | 'from_college'
     description?: string
   }) => Promise<CarpoolRide>
   sendCarpoolJoinRequest: (rideId: string) => Promise<CarpoolJoinRequest>
@@ -144,6 +145,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     capacity: number
     departureDate: string
     departureTime: string
+    direction: 'to_college' | 'from_college'
     description?: string
   }) => {
     try {
@@ -177,17 +179,17 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         prev.map((ride) =>
           ride.id === updatedRequest.rideId
             ? {
-                ...ride,
-                joinRequests: ride.joinRequests?.map((req) => (req.id === updatedRequest.id ? updatedRequest : req)),
-                seatsAvailable:
-                  status === 'accepted' && ride.seatsAvailable > 0
-                    ? Math.max(0, ride.seatsAvailable - 1)
-                    : ride.seatsAvailable,
-                participants:
-                  status === 'accepted' && updatedRequest.requester
-                    ? [...ride.participants, updatedRequest.requester]
-                    : ride.participants,
-              }
+              ...ride,
+              joinRequests: ride.joinRequests?.map((req) => (req.id === updatedRequest.id ? updatedRequest : req)),
+              seatsAvailable:
+                status === 'accepted' && ride.seatsAvailable > 0
+                  ? Math.max(0, ride.seatsAvailable - 1)
+                  : ride.seatsAvailable,
+              participants:
+                status === 'accepted' && updatedRequest.requester
+                  ? [...ride.participants, updatedRequest.requester]
+                  : ride.participants,
+            }
             : ride
         )
       )

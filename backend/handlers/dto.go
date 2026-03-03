@@ -65,6 +65,7 @@ func CarpoolRideDTOFromModel(ride *models.CarpoolRide) *CarpoolRideDTO {
 		SeatsAvailable: ride.SeatsAvailable,
 		DepartureDate:  ride.DepartureDate.Format("2006-01-02"),
 		DepartureTime:  ride.DepartureTime,
+		Direction:      ride.Direction,
 		Description:    ride.Description,
 		Owner:          sellerDTOFromUser(&ride.Owner),
 		Participants:   participants,
@@ -104,6 +105,7 @@ type CarpoolRideDTO struct {
 	SeatsAvailable int                      `json:"seatsAvailable"`
 	DepartureDate  string                   `json:"departureDate"`
 	DepartureTime  string                   `json:"departureTime"`
+	Direction      string                   `json:"direction"`
 	Description    string                   `json:"description"`
 	Owner          *SellerDTO               `json:"owner"`
 	Participants   []*SellerDTO             `json:"participants"`

@@ -15,6 +15,7 @@ const emptyForm = {
   capacity: 3,
   departureDate: '',
   departureTime: '',
+  direction: 'to_college' as 'to_college' | 'from_college',
   description: '',
 }
 
@@ -130,7 +131,17 @@ export default function CarpoolRoute() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-xl font-semibold">{ride.destination}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-semibold">{ride.destination}</h3>
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
+                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          }`}
+                      >
+                        {ride.direction === 'to_college' ? 'To College' : 'From College'}
+                      </span>
+                    </div>
                     <p className="text-sm text-white/70">Pickup at {ride.pickupPoint}</p>
                   </div>
                   <div className="flex items-center gap-4 text-sm">
@@ -163,20 +174,19 @@ export default function CarpoolRoute() {
                         ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
                       }
                       onClick={() => handleJoin(ride.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${
-                        joinLoading === ride.id
-                          ? 'bg-white/10 text-white/60'
-                          : 'bg-white text-slate-900 hover:bg-white/90'
-                      }`}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 transition ${joinLoading === ride.id
+                        ? 'bg-white/10 text-white/60'
+                        : 'bg-white text-slate-900 hover:bg-white/90'
+                        }`}
                     >
                       {joinLoading === ride.id && <Loader2 className="animate-spin" size={16} />}
                       {ride.participants?.some((p) => p.id === user.id)
                         ? 'Joined'
                         : ride.joinRequests?.some((req) => req.requester?.id === user.id && req.status === 'pending')
-                        ? 'Request Sent'
-                        : ride.seatsAvailable === 0
-                        ? 'Full'
-                        : 'Send Join Request'}
+                          ? 'Request Sent'
+                          : ride.seatsAvailable === 0
+                            ? 'Full'
+                            : 'Send Join Request'}
                     </button>
                   )}
                 </div>
@@ -246,6 +256,18 @@ export default function CarpoolRoute() {
               </div>
 
               <div className="grid gap-3">
+                <label className="text-sm text-white/70">
+                  Direction
+                  <select
+                    value={form.direction}
+                    onChange={(e) => setForm((f) => ({ ...f, direction: e.target.value as 'to_college' | 'from_college' }))}
+                    className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-white appearance-none cursor-pointer"
+                    required
+                  >
+                    <option value="to_college" className="bg-[#10172b]">To College</option>
+                    <option value="from_college" className="bg-[#10172b]">From College</option>
+                  </select>
+                </label>
                 <label className="text-sm text-white/70">
                   Destination
                   <input

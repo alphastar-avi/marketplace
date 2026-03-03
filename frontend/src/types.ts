@@ -71,6 +71,7 @@ export type CarpoolRide = {
   seatsAvailable: number
   departureDate: string
   departureTime: string
+  direction: 'to_college' | 'from_college'
   description: string
   owner: UserType
   participants: UserType[]
