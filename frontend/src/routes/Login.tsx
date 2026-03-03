@@ -1,18 +1,41 @@
-import React, { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useRef, useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus } from 'lucide-react'
 import Dither from '../components/ui/Dither'
 
 export default function Login() {
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(searchParams.get('error') || '')
   const { setUser } = useMarketplace()
   const navigate = useNavigate()
   const emailInputRef = useRef<HTMLInputElement>(null)
+
+  // Handle URL token injection for OAuth Users!
+  useEffect(() => {
+    const token = searchParams.get('token')
+    if (token) {
+      setLoading(true)
+      localStorage.setItem('auth_token', token)
+
+      authAPI.getMe()
+        .then(res => {
+          localStorage.setItem('user', JSON.stringify(res.data))
+          setUser(res.data)
+          navigate('/marketplace')
+        })
+        .catch(() => {
+          localStorage.removeItem('auth_token')
+          setError('Google Authentication Failed. Please sign in normally.')
+          setLoading(false)
+          navigate('/login')
+        })
+    }
+  }, [searchParams, navigate, setUser])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
