@@ -70,7 +70,10 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
     return typeof otherParticipant === 'string' ? otherParticipant : otherParticipant.name || 'Unknown User'
   }
 
-  const getProductTitle = (chat: any) => {
+  const getChatSubtitle = (chat: any) => {
+    if (chat.type === 'carpool' && chat.carpool_ride) {
+      return `${chat.carpool_ride.pickup_point} to ${chat.carpool_ride.destination} • ${chat.carpool_ride.departure_time}`
+    }
     const productId = chat.productId || chat.product_id
     const product = products.find(p => p.id === productId)
     return product?.title || 'Unknown Product'
@@ -123,7 +126,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
             {sortedChats.map((chat) => {
               const lastMessage = chat.messages[chat.messages.length - 1]
               const otherParticipant = getOtherParticipantName(chat)
-              const productTitle = getProductTitle(chat)
+              const chatSubtitle = getChatSubtitle(chat)
               const isSelected = selectedChatId === chat.id
 
               return (
@@ -160,7 +163,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
 
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-xs text-white/60 truncate">
-                          {chat.name ? 'Carpool Group' : productTitle}
+                          {chatSubtitle}
                         </p>
                       </div>
 

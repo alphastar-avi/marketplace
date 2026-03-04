@@ -35,6 +35,9 @@ func SetupRoutes(r *gin.Engine) {
 			// AI description generation endpoints
 			products.POST("/generate-description", middleware.AuthMiddleware(), handlers.GenerateDescription)
 			products.POST("/generate-description-with-files", middleware.AuthMiddleware(), handlers.GenerateDescriptionWithFiles)
+
+			// Chat routing
+			products.POST("/:id/chat", middleware.AuthMiddleware(), handlers.CreateProductChat)
 		}
 
 		// AI routes
@@ -56,7 +59,6 @@ func SetupRoutes(r *gin.Engine) {
 		chats := api.Group("/chats")
 		{
 			chats.GET("", middleware.AuthMiddleware(), handlers.GetChats)
-			chats.POST("", handlers.CreateChat)
 			chats.GET("/:id", handlers.GetChat)
 			chats.GET("/:id/messages", handlers.GetChatMessages)
 			chats.POST("/:id/messages", handlers.CreateMessage)
@@ -78,6 +80,7 @@ func SetupRoutes(r *gin.Engine) {
 			carpools.GET("/:id", middleware.OptionalAuthMiddleware(), handlers.GetCarpoolRide)
 			carpools.POST("/:id/requests", middleware.AuthMiddleware(), handlers.CreateCarpoolJoinRequest)
 			carpools.PUT("/requests/:id", middleware.AuthMiddleware(), handlers.UpdateCarpoolJoinRequest)
+			carpools.POST("/:id/chat", middleware.AuthMiddleware(), handlers.CreateCarpoolChat)
 		}
 
 		// Favorites routes

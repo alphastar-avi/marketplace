@@ -24,6 +24,7 @@ func GetChats(c *gin.Context) {
 	result := config.DB.Joins("JOIN chat_participants ON chat_participants.chat_id = chats.id").
 		Where("chat_participants.user_id = ?", userID).
 		Preload("Product").
+		Preload("CarpoolRide").
 		Preload("Participants").
 		Preload("Messages.From").
 		Find(&chats)
@@ -46,7 +47,7 @@ func GetChat(c *gin.Context) {
 	}
 
 	var chat models.Chat
-	result := config.DB.Preload("Product").Preload("Participants").Preload("Messages.From").First(&chat, chatID)
+	result := config.DB.Preload("Product").Preload("CarpoolRide").Preload("Participants").Preload("Messages.From").First(&chat, chatID)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Chat not found"})
 		return
@@ -55,10 +56,16 @@ func GetChat(c *gin.Context) {
 	c.JSON(http.StatusOK, chat)
 }
 
-// CreateChat creates a new chat
-func CreateChat(c *gin.Context) {
+// CreateProductChat creates a new 1-on-1 chat for a product
+func CreateProductChat(c *gin.Context) {
+	id := c.Param("id")
+	productID, err := uuid.Parse(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid product ID"})
+		return
+	}
+
 	var requestData struct {
-		ProductID    uuid.UUID   `json:"product_id" binding:"required"`
 		Participants []uuid.UUID `json:"participants" binding:"required"`
 	}
 
@@ -69,7 +76,7 @@ func CreateChat(c *gin.Context) {
 
 	// Get product to determine college
 	var product models.Product
-	if err := config.DB.First(&product, requestData.ProductID).Error; err != nil {
+	if err := config.DB.First(&product, productID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
@@ -81,8 +88,8 @@ func CreateChat(c *gin.Context) {
 		return
 	}
 
-	productID := requestData.ProductID
 	chat := models.Chat{
+		Type:      "product",
 		ProductID: &productID,
 		CollegeID: product.CollegeID,
 	}
@@ -101,6 +108,64 @@ func CreateChat(c *gin.Context) {
 
 	// Preload relationships for response
 	config.DB.Preload("Product").Preload("Participants").Preload("Messages.From").First(&chat, chat.ID)
+
+	c.JSON(http.StatusCreated, chat)
+}
+
+// CreateCarpoolChat creates a new group chat for a carpool ride
+func CreateCarpoolChat(c *gin.Context) {
+	id := c.Param("id")
+	carpoolID, err := uuid.Parse(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid carpool ID"})
+		return
+	}
+
+	var requestData struct {
+		Name         string      `json:"name" binding:"required"`
+		Participants []uuid.UUID `json:"participants" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get carpool to determine college (using owner's college for now since CarpoolRide might not have CollegeID directly)
+	var carpool models.CarpoolRide
+	if err := config.DB.Preload("Owner").First(&carpool, carpoolID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Carpool ride not found"})
+		return
+	}
+
+	// Get participants
+	var participants []models.User
+	if err := config.DB.Find(&participants, requestData.Participants).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid participants"})
+		return
+	}
+
+	chat := models.Chat{
+		Type:          "carpool",
+		Name:          requestData.Name,
+		CarpoolRideID: &carpoolID,
+		CollegeID:     carpool.Owner.CollegeID, // Inherit college from the ride owner
+	}
+
+	result := config.DB.Create(&chat)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create chat"})
+		return
+	}
+
+	// Add participants to chat
+	if err := config.DB.Model(&chat).Association("Participants").Append(participants); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add participants"})
+		return
+	}
+
+	// Preload relationships for response
+	config.DB.Preload("CarpoolRide").Preload("Participants").Preload("Messages.From").First(&chat, chat.ID)
 
 	c.JSON(http.StatusCreated, chat)
 }

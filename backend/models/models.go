@@ -55,6 +55,7 @@ type Product struct {
 type Chat struct {
 	ID            uuid.UUID    `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	Name          string       `json:"name"`
+	Type          string       `json:"type" gorm:"not null;default:'product'"`
 	ProductID     *uuid.UUID   `json:"product_id" gorm:"type:uuid"`
 	Product       *Product     `json:"product" gorm:"foreignKey:ProductID"`
 	CarpoolRideID *uuid.UUID   `json:"carpool_ride_id" gorm:"type:uuid"`
