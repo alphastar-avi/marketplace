@@ -279,6 +279,23 @@ func UpdateCarpoolJoinRequest(c *gin.Context) {
 					return err
 				}
 			}
+		} else if input.Status == "declined" && joinReq.Status == "accepted" {
+			// Restore the seat capacity
+			if err := tx.Model(&joinReq.Ride).UpdateColumn("seats_available", gorm.Expr("seats_available + 1")).Error; err != nil {
+				return err
+			}
+
+			// Remove user from ride participants
+			if err := tx.Model(&joinReq.Ride).Association("Participants").Delete(&joinReq.Requester); err != nil {
+				return err
+			}
+
+			// Remove user from the group chat if it exists
+			if joinReq.Ride.ChatID != nil {
+				if err := tx.Model(&models.Chat{ID: *joinReq.Ride.ChatID}).Association("Participants").Delete(&joinReq.Requester); err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil

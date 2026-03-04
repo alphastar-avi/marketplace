@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Send, Check, X as XIcon } from 'lucide-react'
+import { ArrowLeft, Send, Check, X as XIcon, Users } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 
 interface ChatInterfaceProps {
@@ -12,6 +12,7 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
   const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest, refreshChat } = useMarketplace()
   const chat = chats.find((c) => c.id === chatId)
   const [text, setText] = useState('')
+  const [showParticipants, setShowParticipants] = useState(false)
   const messagesRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -102,6 +103,48 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
               : (product?.title || 'Unknown Product')}
           </p>
         </div>
+
+        {chat.type === 'carpool' && (
+          <div className="relative ml-auto">
+            <button
+              onClick={() => setShowParticipants(!showParticipants)}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+              title="View Participants"
+            >
+              <Users size={18} />
+            </button>
+
+            {showParticipants && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-[#0b1220] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="p-3 border-b border-white/10 text-xs font-semibold text-white/50 uppercase tracking-wider flex justify-between items-center">
+                  <span>Participants ({chat.participants.length})</span>
+                  <button onClick={() => setShowParticipants(false)} className="hover:text-white transition-colors">
+                    <XIcon size={14} />
+                  </button>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {chat.participants.map((p: any) => {
+                    const participantId = typeof p === 'string' ? p : p.id
+                    const participantName = typeof p === 'string' ? p : p.name || 'Unknown User'
+                    return (
+                      <div key={participantId} className="px-4 py-3 text-sm flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center shrink-0">
+                          <span className="text-white font-semibold text-xs">
+                            {getInitials(participantName)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-white font-medium">{participantName}</p>
+                          {participantId === user?.id && <p className="text-[10px] text-white/50 uppercase tracking-wider">You</p>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Messages */}

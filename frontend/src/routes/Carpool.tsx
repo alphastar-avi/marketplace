@@ -244,16 +244,22 @@ export default function CarpoolRoute() {
                               <button
                                 disabled={respondLoading === req.id || req.status === 'accepted'}
                                 onClick={() => handleRespond(req.id, 'accepted')}
-                                className="px-3 py-1 rounded-full bg-emerald-500/80 text-white text-xs"
+                                className={`px-3 py-1 rounded-full text-xs transition-colors ${req.status === 'accepted'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : 'bg-emerald-500/80 hover:bg-emerald-500 text-white'
+                                  }`}
                               >
-                                {respondLoading === req.id ? '...' : 'Accept'}
+                                {respondLoading === req.id && req.status !== 'accepted' ? '...' : 'Accept'}
                               </button>
                               <button
                                 disabled={respondLoading === req.id || req.status === 'declined'}
                                 onClick={() => handleRespond(req.id, 'declined')}
-                                className="px-3 py-1 rounded-full bg-red-500/70 text-white text-xs"
+                                className={`px-3 py-1 rounded-full text-xs transition-colors ${req.status === 'declined'
+                                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                                    : 'bg-red-500/70 hover:bg-red-500 text-white'
+                                  }`}
                               >
-                                Decline
+                                {respondLoading === req.id && req.status !== 'declined' ? '...' : 'Decline'}
                               </button>
                             </div>
                           </div>
