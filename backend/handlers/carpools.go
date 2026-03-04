@@ -120,6 +120,7 @@ func CreateCarpoolRide(c *gin.Context) {
 		}
 
 		chat := models.Chat{
+			Type:          "carpool",
 			Name:          ride.Title,
 			CarpoolRideID: &ride.ID,
 			CollegeID:     user.CollegeID,
@@ -258,6 +259,7 @@ func UpdateCarpoolJoinRequest(c *gin.Context) {
 			// ensure chat exists
 			if joinReq.Ride.ChatID == nil {
 				chat := models.Chat{
+					Type:          "carpool",
 					Name:          joinReq.Ride.Title,
 					CarpoolRideID: &joinReq.Ride.ID,
 					CollegeID:     joinReq.Ride.CollegeID,

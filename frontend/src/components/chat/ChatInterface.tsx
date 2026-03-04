@@ -61,6 +61,8 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
     ? otherParticipantObj
     : (otherParticipantObj as any)?.name || 'Unknown User'
 
+  const chatTitle = chat.type === 'carpool' ? (chat.name || 'Carpool Group') : otherParticipant
+
   const send = () => {
     if (!text.trim()) return
     pushMessage(chat.id, user?.id || 'guest', text.trim())
@@ -88,13 +90,17 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center">
           <span className="text-white font-semibold text-sm">
-            {getInitials(otherParticipant)}
+            {getInitials(chatTitle)}
           </span>
         </div>
 
         <div className="flex-1">
-          <h2 className="font-semibold">{otherParticipant}</h2>
-          <p className="text-sm text-white/60 truncate">{product?.title || 'Unknown Product'}</p>
+          <h2 className="font-semibold">{chatTitle}</h2>
+          <p className="text-sm text-white/60 truncate">
+            {chat.type === 'carpool' && chat.carpool_ride
+              ? `${chat.carpool_ride.pickup_point} to ${chat.carpool_ride.destination} • ${chat.carpool_ride.departure_time}`
+              : (product?.title || 'Unknown Product')}
+          </p>
         </div>
       </div>
 
@@ -109,10 +115,18 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
           const isFromUser = senderId === user?.id
           const timestamp = message.at || message.created_at
 
+          const senderName =
+            typeof message.from === 'string'
+              ? message.from
+              : message.from?.name || 'Unknown User'
+
           return (
-            <div key={message.id} className={`flex ${isFromUser ? 'justify-end' : 'justify-start'}`}>
+            <div key={message.id} className={`flex flex-col ${isFromUser ? 'items-end' : 'items-start'}`}>
+              {!isFromUser && chat.type === 'carpool' && (
+                <span className="text-xs text-white/50 ml-1 mb-1">{senderName}</span>
+              )}
               <div className={`max-w-[75%] p-3 rounded-xl ${isFromUser
-                ? 'bg-gradient-to-r from-indigo-500 to-cyan-400 text-white'
+                ? 'bg-[#00356B] text-white'
                 : 'bg-white/8 text-white'
                 }`}>
                 <div className="text-sm leading-relaxed">{message.text}</div>
@@ -139,7 +153,7 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
       {/* Message Input or Status Card */}
       <div className="p-4 border-t border-white/10">
-        {!activeRequest || activeRequest.status === 'accepted' ? (
+        {chat.type === 'carpool' || !activeRequest || activeRequest.status === 'accepted' ? (
           <div className="flex gap-3">
             <input
               value={text}

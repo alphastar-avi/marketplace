@@ -48,7 +48,14 @@ export type Message = {
 export type Chat = {
   id: string
   name?: string
-  productId: string
+  type: 'product' | 'carpool'
+  productId?: string
+  carpoolRideId?: string
+  carpool_ride?: {
+    pickup_point: string
+    destination: string
+    departure_time: string
+  }
   participants: string[]
   messages: Message[]
 }
