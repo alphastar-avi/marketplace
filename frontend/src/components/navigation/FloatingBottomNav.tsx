@@ -1,33 +1,33 @@
 import { ComponentType } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home } from 'lucide-react'
+import { Home, Monitor } from 'lucide-react'
 
 const CarpoolIcon = ({ size = 18 }: { size?: number }) => (
-	<svg
-		width={size}
-		height={size}
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		strokeWidth={2}
-		strokeLinecap="round"
-		strokeLinejoin="round"
-		className="opacity-90"
-	>
-		<path d="M10 2h4" />
-		<path d="M21 8l-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4A2 2 0 0 0 6.497 6.257L5 10 3 8" />
-		<path d="M7 14h.01M17 14h.01" />
-		<rect width="18" height="8" x="3" y="10" rx="2" />
-		<path d="M5 18v2m14-2v2" />
-	</svg>
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="opacity-90"
+  >
+    <path d="M10 2h4" />
+    <path d="M21 8l-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4A2 2 0 0 0 6.497 6.257L5 10 3 8" />
+    <path d="M7 14h.01M17 14h.01" />
+    <rect width="18" height="8" x="3" y="10" rx="2" />
+    <path d="M5 18v2m14-2v2" />
+  </svg>
 )
 
 type NavItem = {
-	key: 'home' | 'carpool'
-	label: string
-	path?: string
-	icon: ComponentType<{ size?: number }>
-	isActive?: (pathname: string) => boolean
+  key: 'home' | 'carpool' | 'compute'
+  label: string
+  path?: string
+  icon: ComponentType<{ size?: number }>
+  isActive?: (pathname: string) => boolean
 }
 
 const navItems: NavItem[] = [
@@ -44,6 +44,13 @@ const navItems: NavItem[] = [
     path: '/carpool',
     icon: CarpoolIcon,
     isActive: (pathname: string) => pathname.startsWith('/carpool'),
+  },
+  {
+    key: 'compute',
+    label: 'ComputeShare',
+    path: '/compute',
+    icon: Monitor,
+    isActive: (pathname: string) => pathname.startsWith('/compute'),
   },
 ]
 
@@ -64,11 +71,10 @@ export default function FloatingBottomNav() {
               key={key}
               onClick={handleClick}
               type="button"
-              className={`flex items-center gap-2 rounded-[20px] px-2.5 py-1.5 text-sm transition-all duration-200 focus-visible:outline-none ${
-                active
+              className={`flex items-center gap-2 rounded-[20px] px-2.5 py-1.5 text-sm transition-all duration-200 focus-visible:outline-none ${active
                   ? 'bg-white/10 text-white shadow-[0_10px_22px_rgba(3,7,18,0.4)]'
                   : 'text-white/55 hover:text-white'
-              }`}
+                }`}
             >
               <div className={`h-10 w-10 rounded-[18px] grid place-items-center border border-white/10 ${active ? 'bg-[rgba(255,255,255,0.15)] text-white' : 'bg-white/5 text-white/60'}`}>
                 <Icon size={18} />
