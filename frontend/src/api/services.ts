@@ -1,5 +1,5 @@
 import api from './client'
-import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest, College } from '../types'
+import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest, College, ComputeGroup } from '../types'
 
 // Products API
 export const productsAPI = {
@@ -104,4 +104,11 @@ export const authAPI = {
     api.post('/auth/login', credentials),
   register: (userData: { name: string; email: string; password: string; year?: string; department?: string; college: string }) =>
     api.post('/auth/register', userData),
+}
+
+// Compute API
+export const computeAPI = {
+  getAll: () => api.get<ComputeGroup[]>('/compute'),
+  create: (title: string) => api.post<ComputeGroup>('/compute', { title }),
+  validateTitle: (title: string) => api.post<{ available: boolean }>('/compute/validate-title', { title }),
 }

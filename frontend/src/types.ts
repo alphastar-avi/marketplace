@@ -95,4 +95,13 @@ export type CarpoolRide = {
   createdAt: string
 }
 
-
+export type ComputeGroup = {
+  id: string
+  title: string
+  owner_id: string
+  owner?: UserType
+  college_id: string
+  college?: College
+  created_at: string
+  updated_at: string
+}
