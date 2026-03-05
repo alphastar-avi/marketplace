@@ -52,7 +52,9 @@ api.interceptors.response.use(
       // Skip global logout for PIN verification — a 401 there just means wrong PIN
       const requestUrl: string = error.config?.url || ''
       const isVerifyEndpoint = requestUrl.includes('/verify')
-      if (!isVerifyEndpoint) {
+      // Skip redirect if already on an auth page — prevents infinite reload loops
+      const onAuthPage = ['/login', '/signup'].some(p => window.location.pathname.startsWith(p))
+      if (!isVerifyEndpoint && !onAuthPage) {
         // Token expired or invalid, clear auth data
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user')
