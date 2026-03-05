@@ -98,6 +98,10 @@ export type CarpoolRide = {
 export type ComputeGroup = {
   id: string
   title: string
+  url: string
+  worker_size: number
+  epochs: number
+  batch_size: number
   owner_id: string
   owner?: UserType
   college_id: string

@@ -40,8 +40,17 @@ type MarketplaceContextType = {
   respondToCarpoolRequest: (requestId: string, status: 'accepted' | 'declined') => Promise<CarpoolJoinRequest>
   computeGroups: ComputeGroup[]
   refreshComputeGroups: () => Promise<void>
-  createComputeGroup: (title: string) => Promise<ComputeGroup>
+  createComputeGroup: (payload: {
+    title: string
+    pin: string
+    url: string
+    workerSize: number
+    epochs: number
+    batchSize: number
+  }) => Promise<ComputeGroup>
   checkComputeTitleUnique: (title: string) => Promise<boolean>
+  verifyComputeGroupPIN: (groupId: string, pin: string) => Promise<ComputeGroup>
+  deleteComputeGroup: (groupId: string) => Promise<void>
   isHydrated: boolean
 }
 
@@ -196,16 +205,40 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const createComputeGroup = async (title: string) => {
+  const createComputeGroup = async (payload: {
+    title: string
+    pin: string
+    url: string
+    workerSize: number
+    epochs: number
+    batchSize: number
+  }) => {
     try {
       if (!user) throw new Error("Must be logged in")
-      const response = await computeAPI.create(title)
+      const response = await computeAPI.create({
+        title: payload.title,
+        pin: payload.pin,
+        url: payload.url,
+        worker_size: payload.workerSize,
+        epochs: payload.epochs,
+        batch_size: payload.batchSize,
+      })
       setComputeGroups((prev) => [response.data, ...prev])
       return response.data
     } catch (error) {
       console.error('Failed to create compute group:', error)
       throw error
     }
+  }
+
+  const verifyComputeGroupPIN = async (groupId: string, pin: string): Promise<ComputeGroup> => {
+    const response = await computeAPI.verifyPIN(groupId, pin)
+    return response.data
+  }
+
+  const deleteComputeGroup = async (groupId: string): Promise<void> => {
+    await computeAPI.deleteGroup(groupId)
+    setComputeGroups((prev) => prev.filter((g) => g.id !== groupId))
   }
 
   const createCarpoolRide = async (payload: {
@@ -531,6 +564,8 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         refreshComputeGroups,
         createComputeGroup,
         checkComputeTitleUnique,
+        verifyComputeGroupPIN,
+        deleteComputeGroup,
         isHydrated,
       }}
     >
