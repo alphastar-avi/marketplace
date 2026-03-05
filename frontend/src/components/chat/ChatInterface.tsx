@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Send, Check, X as XIcon } from 'lucide-react'
+import { ArrowLeft, Send, Check, X as XIcon, Users } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 
 interface ChatInterfaceProps {
@@ -12,6 +12,7 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
   const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest, refreshChat } = useMarketplace()
   const chat = chats.find((c) => c.id === chatId)
   const [text, setText] = useState('')
+  const [showParticipants, setShowParticipants] = useState(false)
   const messagesRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -61,6 +62,8 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
     ? otherParticipantObj
     : (otherParticipantObj as any)?.name || 'Unknown User'
 
+  const chatTitle = chat.type === 'carpool' ? (chat.name || 'Carpool Group') : otherParticipant
+
   const send = () => {
     if (!text.trim()) return
     pushMessage(chat.id, user?.id || 'guest', text.trim())
@@ -88,14 +91,60 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center">
           <span className="text-white font-semibold text-sm">
-            {getInitials(otherParticipant)}
+            {getInitials(chatTitle)}
           </span>
         </div>
 
         <div className="flex-1">
-          <h2 className="font-semibold">{otherParticipant}</h2>
-          <p className="text-sm text-white/60 truncate">{product?.title || 'Unknown Product'}</p>
+          <h2 className="font-semibold">{chatTitle}</h2>
+          <p className="text-sm text-white/60 truncate">
+            {chat.type === 'carpool' && chat.carpool_ride
+              ? `${chat.carpool_ride.pickup_point} to ${chat.carpool_ride.destination} • ${chat.carpool_ride.departure_time}`
+              : (product?.title || 'Unknown Product')}
+          </p>
         </div>
+
+        {chat.type === 'carpool' && (
+          <div className="relative ml-auto">
+            <button
+              onClick={() => setShowParticipants(!showParticipants)}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+              title="View Participants"
+            >
+              <Users size={18} />
+            </button>
+
+            {showParticipants && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-[#0b1220] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="p-3 border-b border-white/10 text-xs font-semibold text-white/50 uppercase tracking-wider flex justify-between items-center">
+                  <span>Participants ({chat.participants.length})</span>
+                  <button onClick={() => setShowParticipants(false)} className="hover:text-white transition-colors">
+                    <XIcon size={14} />
+                  </button>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {chat.participants.map((p: any) => {
+                    const participantId = typeof p === 'string' ? p : p.id
+                    const participantName = typeof p === 'string' ? p : p.name || 'Unknown User'
+                    return (
+                      <div key={participantId} className="px-4 py-3 text-sm flex items-center gap-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center shrink-0">
+                          <span className="text-white font-semibold text-xs">
+                            {getInitials(participantName)}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-white font-medium">{participantName}</p>
+                          {participantId === user?.id && <p className="text-[10px] text-white/50 uppercase tracking-wider">You</p>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Messages */}
@@ -109,10 +158,18 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
           const isFromUser = senderId === user?.id
           const timestamp = message.at || message.created_at
 
+          const senderName =
+            typeof message.from === 'string'
+              ? message.from
+              : message.from?.name || 'Unknown User'
+
           return (
-            <div key={message.id} className={`flex ${isFromUser ? 'justify-end' : 'justify-start'}`}>
+            <div key={message.id} className={`flex flex-col ${isFromUser ? 'items-end' : 'items-start'}`}>
+              {!isFromUser && chat.type === 'carpool' && (
+                <span className="text-xs text-white/50 ml-1 mb-1">{senderName}</span>
+              )}
               <div className={`max-w-[75%] p-3 rounded-xl ${isFromUser
-                ? 'bg-gradient-to-r from-indigo-500 to-cyan-400 text-white'
+                ? 'bg-[#00356B] text-white'
                 : 'bg-white/8 text-white'
                 }`}>
                 <div className="text-sm leading-relaxed">{message.text}</div>
@@ -139,7 +196,7 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
 
       {/* Message Input or Status Card */}
       <div className="p-4 border-t border-white/10">
-        {!activeRequest || activeRequest.status === 'accepted' ? (
+        {chat.type === 'carpool' || !activeRequest || activeRequest.status === 'accepted' ? (
           <div className="flex gap-3">
             <input
               value={text}

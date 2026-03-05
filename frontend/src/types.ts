@@ -20,6 +20,12 @@ export type Product = {
   }
 }
 
+export type College = {
+  id: string
+  name: string
+  domain: string
+}
+
 export type UserType = {
   id: string
   name: string
@@ -41,7 +47,15 @@ export type Message = {
 
 export type Chat = {
   id: string
-  productId: string
+  name?: string
+  type: 'product' | 'carpool'
+  productId?: string
+  carpoolRideId?: string
+  carpool_ride?: {
+    pickup_point: string
+    destination: string
+    departure_time: string
+  }
   participants: string[]
   messages: Message[]
 }
@@ -81,4 +95,17 @@ export type CarpoolRide = {
   createdAt: string
 }
 
-
+export type ComputeGroup = {
+  id: string
+  title: string
+  url: string
+  worker_size: number
+  epochs: number
+  batch_size: number
+  owner_id: string
+  owner?: UserType
+  college_id: string
+  college?: College
+  created_at: string
+  updated_at: string
+}

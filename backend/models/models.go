@@ -54,6 +54,8 @@ type Product struct {
 // Chat represents a conversation between users
 type Chat struct {
 	ID            uuid.UUID    `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Name          string       `json:"name"`
+	Type          string       `json:"type" gorm:"not null;default:'product'"`
 	ProductID     *uuid.UUID   `json:"product_id" gorm:"type:uuid"`
 	Product       *Product     `json:"product" gorm:"foreignKey:ProductID"`
 	CarpoolRideID *uuid.UUID   `json:"carpool_ride_id" gorm:"type:uuid"`
@@ -137,6 +139,30 @@ type CarpoolJoinRequest struct {
 	Status      string      `json:"status" gorm:"default:'pending'"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
+}
+
+// ComputeGroup represents a shared computing resource or group
+type ComputeGroup struct {
+	ID         uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Title      string    `json:"title" gorm:"unique;not null"`
+	PIN        string    `json:"-" gorm:"not null"` // Hidden from public responses
+	URL        string    `json:"url" gorm:"not null"`
+	WorkerSize int       `json:"worker_size" gorm:"not null;default:1"`
+	Epochs     int       `json:"epochs" gorm:"not null;default:10"`
+	BatchSize  int       `json:"batch_size" gorm:"not null;default:32"`
+	OwnerID    uuid.UUID `json:"owner_id" gorm:"type:uuid;not null"`
+	Owner      User      `json:"owner" gorm:"foreignKey:OwnerID"`
+	CollegeID  uuid.UUID `json:"college_id" gorm:"type:uuid;not null"`
+	College    College   `json:"college" gorm:"foreignKey:CollegeID"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+func (c *ComputeGroup) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == uuid.Nil {
+		c.ID = uuid.New()
+	}
+	return nil
 }
 
 // BeforeCreate hooks for UUID generation

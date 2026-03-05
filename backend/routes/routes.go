@@ -21,6 +21,9 @@ func SetupRoutes(r *gin.Engine) {
 			auth.GET("/me", middleware.AuthMiddleware(), handlers.GetMe)
 		}
 
+		// Colleges routes (public)
+		api.GET("/colleges", handlers.GetColleges)
+
 		// Products routes
 		products := api.Group("/products")
 		{
@@ -32,6 +35,9 @@ func SetupRoutes(r *gin.Engine) {
 			// AI description generation endpoints
 			products.POST("/generate-description", middleware.AuthMiddleware(), handlers.GenerateDescription)
 			products.POST("/generate-description-with-files", middleware.AuthMiddleware(), handlers.GenerateDescriptionWithFiles)
+
+			// Chat routing
+			products.POST("/:id/chat", middleware.AuthMiddleware(), handlers.CreateProductChat)
 		}
 
 		// AI routes
@@ -53,7 +59,6 @@ func SetupRoutes(r *gin.Engine) {
 		chats := api.Group("/chats")
 		{
 			chats.GET("", middleware.AuthMiddleware(), handlers.GetChats)
-			chats.POST("", handlers.CreateChat)
 			chats.GET("/:id", handlers.GetChat)
 			chats.GET("/:id/messages", handlers.GetChatMessages)
 			chats.POST("/:id/messages", handlers.CreateMessage)
@@ -75,6 +80,17 @@ func SetupRoutes(r *gin.Engine) {
 			carpools.GET("/:id", middleware.OptionalAuthMiddleware(), handlers.GetCarpoolRide)
 			carpools.POST("/:id/requests", middleware.AuthMiddleware(), handlers.CreateCarpoolJoinRequest)
 			carpools.PUT("/requests/:id", middleware.AuthMiddleware(), handlers.UpdateCarpoolJoinRequest)
+			carpools.POST("/:id/chat", middleware.AuthMiddleware(), handlers.CreateCarpoolChat)
+		}
+
+		// Compute routes
+		compute := api.Group("/compute")
+		{
+			compute.GET("", middleware.AuthMiddleware(), handlers.GetComputeGroups)
+			compute.POST("/validate-title", middleware.AuthMiddleware(), handlers.ValidateComputeTitle)
+			compute.POST("", middleware.AuthMiddleware(), handlers.CreateComputeGroup)
+			compute.POST("/:id/verify", middleware.AuthMiddleware(), handlers.VerifyComputeGroupPIN)
+			compute.DELETE("/:id", middleware.AuthMiddleware(), handlers.DeleteComputeGroup)
 		}
 
 		// Favorites routes

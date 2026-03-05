@@ -1,5 +1,5 @@
 import api from './client'
-import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest } from '../types'
+import { Product, UserType, Chat, Message, PurchaseRequest, CarpoolRide, CarpoolJoinRequest, College, ComputeGroup } from '../types'
 
 // Products API
 export const productsAPI = {
@@ -43,6 +43,11 @@ export const usersAPI = {
     }
     return api.put<UserType>(`/users/${id}`, user)
   },
+}
+
+// Colleges API
+export const collegesAPI = {
+  getAll: () => api.get<College[]>('/colleges'),
 }
 
 // Chats API
@@ -99,4 +104,20 @@ export const authAPI = {
     api.post('/auth/login', credentials),
   register: (userData: { name: string; email: string; password: string; year?: string; department?: string; college: string }) =>
     api.post('/auth/register', userData),
+}
+
+// Compute API
+export const computeAPI = {
+  getAll: () => api.get<ComputeGroup[]>('/compute'),
+  create: (payload: {
+    title: string
+    pin: string
+    url: string
+    worker_size: number
+    epochs: number
+    batch_size: number
+  }) => api.post<ComputeGroup>('/compute', payload),
+  validateTitle: (title: string) => api.post<{ available: boolean }>('/compute/validate-title', { title }),
+  verifyPIN: (groupId: string, pin: string) => api.post(`/compute/${groupId}/verify`, { pin }),
+  deleteGroup: (groupId: string) => api.delete(`/compute/${groupId}`),
 }

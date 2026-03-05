@@ -49,10 +49,17 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, clear auth data
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+      // Skip global logout for PIN verification — a 401 there just means wrong PIN
+      const requestUrl: string = error.config?.url || ''
+      const isVerifyEndpoint = requestUrl.includes('/verify')
+      // Skip redirect if already on an auth page — prevents infinite reload loops
+      const onAuthPage = ['/login', '/signup'].some(p => window.location.pathname.startsWith(p))
+      if (!isVerifyEndpoint && !onAuthPage) {
+        // Token expired or invalid, clear auth data
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user')
+        window.location.href = '/login'
+      }
     }
     console.error('API Error:', error.response?.data || error.message)
     return Promise.reject(error)

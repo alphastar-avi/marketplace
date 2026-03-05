@@ -67,6 +67,7 @@ func ConnectDatabase() {
 		&models.Favorite{},
 		&models.CarpoolRide{},
 		&models.CarpoolJoinRequest{},
+		&models.ComputeGroup{},
 	)
 
 	if err != nil {
