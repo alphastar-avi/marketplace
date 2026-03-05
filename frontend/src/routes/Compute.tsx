@@ -19,11 +19,13 @@ export default function ComputeRoute() {
     const [isCopyingServer, setIsCopyingServer] = useState(false)
     const [isCopyingModel, setIsCopyingModel] = useState(false)
     const [isCopyingWorker, setIsCopyingWorker] = useState(false)
+    const [isCopyingReqs, setIsCopyingReqs] = useState(false)
 
     // Pre-fetched script code
     const [serverCode, setServerCode] = useState('')
     const [modelCode, setModelCode] = useState('')
     const [workerCode, setWorkerCode] = useState('')
+    const [reqsCode, setReqsCode] = useState('')
 
     // Helper for robust clipboard copy after async fetch
     const copyToClipboardRobust = async (text: string) => {
@@ -77,14 +79,16 @@ export default function ComputeRoute() {
     useEffect(() => {
         const fetchScripts = async () => {
             try {
-                const [serverRes, modelRes, workerRes] = await Promise.all([
+                const [serverRes, modelRes, workerRes, reqsRes] = await Promise.all([
                     fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/server.py'),
                     fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/model.py'),
-                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/worker.py')
+                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/worker.py'),
+                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/requirements.txt')
                 ])
                 if (serverRes.ok) setServerCode(await serverRes.text())
                 if (modelRes.ok) setModelCode(await modelRes.text())
                 if (workerRes.ok) setWorkerCode(await workerRes.text())
+                if (reqsRes.ok) setReqsCode(await reqsRes.text())
             } catch (err) {
                 console.error("Failed to pre-fetch scripts:", err)
             }
@@ -416,11 +420,25 @@ export default function ComputeRoute() {
                                     <div className="text-sm text-white/70 leading-relaxed">
                                         <button
                                             type="button"
-                                            onClick={() => navigator.clipboard.writeText(`flask==3.0.0\nrequests==2.31.0\nnumpy==1.26.0\ntorch==2.1.0\npillow==10.1.0`)}
-                                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1"
+                                            disabled={isCopyingReqs}
+                                            onClick={async () => {
+                                                if (!reqsCode) {
+                                                    alert("Requirements code is still loading or failed to load.");
+                                                    return;
+                                                }
+                                                try {
+                                                    setIsCopyingReqs(true)
+                                                    await copyToClipboardRobust(reqsCode)
+                                                } catch (err) {
+                                                    console.error("Failed to copy requirements.txt:", err)
+                                                } finally {
+                                                    setIsCopyingReqs(false)
+                                                }
+                                            }}
+                                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Copy requirements.txt snippet"
                                         >
-                                            Click here
+                                            {isCopyingReqs ? 'Copying...' : 'Click here'}
                                         </button>
                                         <span>to copy the requirements and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">requirements.txt</code>, then run these commands:</span>
                                     </div>
@@ -560,7 +578,8 @@ export default function ComputeRoute() {
                                                         }
                                                         try {
                                                             setIsCopyingWorker(true)
-                                                            await copyToClipboardRobust(workerCode)
+                                                            const finalWorkerCode = workerCode.replace(/SERVER_URL\s*=\s*['"][^'"]*['"]/, `SERVER_URL = "${url}"`)
+                                                            await copyToClipboardRobust(finalWorkerCode)
                                                         } catch (err) {
                                                             console.error("Failed to copy worker.py:", err)
                                                         } finally {
