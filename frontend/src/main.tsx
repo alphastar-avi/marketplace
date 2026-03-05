@@ -9,6 +9,7 @@ import ProfileRoute from './routes/Profile'
 import ListItemRoute from './routes/ListItem'
 import ChatsRoute from './routes/Chats'
 import CarpoolRoute from './routes/Carpool'
+import ComputeRoute from './routes/Compute'
 import AuthCallback from './routes/AuthCallback'
 import Login from './routes/Login'
 import Signup from './routes/Signup'
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
   { path: '/list-item', element: <ListItemRoute /> },
   { path: '/chats', element: <ChatsRoute /> },
   { path: '/carpool', element: <CarpoolRoute /> },
+  { path: '/compute', element: <ComputeRoute /> },
   { path: '/auth/callback', element: <AuthCallback /> },
 ])
 

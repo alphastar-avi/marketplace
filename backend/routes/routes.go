@@ -83,6 +83,14 @@ func SetupRoutes(r *gin.Engine) {
 			carpools.POST("/:id/chat", middleware.AuthMiddleware(), handlers.CreateCarpoolChat)
 		}
 
+		// Compute routes
+		compute := api.Group("/compute")
+		{
+			compute.GET("", middleware.AuthMiddleware(), handlers.GetComputeGroups)
+			compute.POST("/validate-title", middleware.AuthMiddleware(), handlers.ValidateComputeTitle)
+			compute.POST("", middleware.AuthMiddleware(), handlers.CreateComputeGroup)
+		}
+
 		// Favorites routes
 		favorites := api.Group("/favorites")
 		{

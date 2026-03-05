@@ -1,9 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import { Product, UserType, Chat, PurchaseRequest, CarpoolRide, CarpoolJoinRequest } from '../types'
+import { Product, UserType, Chat, PurchaseRequest, CarpoolRide, CarpoolJoinRequest, ComputeGroup } from '../types'
 import { uid, nowIso, arraysEq, STORAGE_KEYS } from '../utils'
-import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI, carpoolAPI } from '../api/services'
+import { productsAPI, usersAPI, chatsAPI, purchaseRequestsAPI, favoritesAPI, authAPI, carpoolAPI, computeAPI } from '../api/services'
 
 type MarketplaceContextType = {
   products: Product[]
@@ -38,6 +38,10 @@ type MarketplaceContextType = {
   }) => Promise<CarpoolRide>
   sendCarpoolJoinRequest: (rideId: string) => Promise<CarpoolJoinRequest>
   respondToCarpoolRequest: (requestId: string, status: 'accepted' | 'declined') => Promise<CarpoolJoinRequest>
+  computeGroups: ComputeGroup[]
+  refreshComputeGroups: () => Promise<void>
+  createComputeGroup: (title: string) => Promise<ComputeGroup>
+  checkComputeTitleUnique: (title: string) => Promise<boolean>
   isHydrated: boolean
 }
 
@@ -71,6 +75,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
   const [chats, setChats] = useState<Chat[]>([])
   const [purchaseRequests, setPurchaseRequests] = useState<PurchaseRequest[]>([])
   const [carpoolRides, setCarpoolRides] = useState<CarpoolRide[]>([])
+  const [computeGroups, setComputeGroups] = useState<ComputeGroup[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
 
@@ -88,6 +93,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
           setCarpoolRides(carpoolsResponse.data)
         } catch (error) {
           console.error('Failed to load initial carpools:', error)
+        }
+
+        // Load compute groups
+        try {
+          const computeResponse = await computeAPI.getAll()
+          setComputeGroups(computeResponse.data)
+        } catch (error) {
+          console.error('Failed to load initial compute groups:', error)
         }
 
         // Check for authenticated user token to load protected info
@@ -129,6 +142,14 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
             } catch (error) {
               console.error('Failed to load college-filtered carpools:', error)
             }
+
+            // Re-fetch compute groups filtered by user's college
+            try {
+              const computeResponse = await computeAPI.getAll()
+              setComputeGroups(computeResponse.data)
+            } catch (error) {
+              console.error('Failed to load college-filtered compute groups:', error)
+            }
           } catch (error) {
             // Token invalid, clear auth data
             localStorage.removeItem('auth_token')
@@ -155,6 +176,37 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
       console.error('Failed to refresh carpools:', error)
     }
   }, [])
+
+  const refreshComputeGroups = useCallback(async () => {
+    try {
+      const response = await computeAPI.getAll()
+      setComputeGroups(response.data)
+    } catch (error) {
+      console.error('Failed to refresh compute groups:', error)
+    }
+  }, [])
+
+  const checkComputeTitleUnique = async (title: string) => {
+    try {
+      const response = await computeAPI.validateTitle(title)
+      return response.data.available
+    } catch (error) {
+      console.error('Failed to check if compute title is unique:', error)
+      return false
+    }
+  }
+
+  const createComputeGroup = async (title: string) => {
+    try {
+      if (!user) throw new Error("Must be logged in")
+      const response = await computeAPI.create(title)
+      setComputeGroups((prev) => [response.data, ...prev])
+      return response.data
+    } catch (error) {
+      console.error('Failed to create compute group:', error)
+      throw error
+    }
+  }
 
   const createCarpoolRide = async (payload: {
     title: string
@@ -302,7 +354,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Failed to create chat:', error)
       // Fallback to local creation
-      const chat: Chat = { id: uid('c'), productId, participants, messages: [] }
+      const chat: Chat = { id: uid('c'), type: 'product', productId, participants, messages: [] }
       setChats((s) => [...s, chat])
       return chat
     }
@@ -475,6 +527,10 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         createCarpoolRide,
         sendCarpoolJoinRequest,
         respondToCarpoolRequest,
+        computeGroups,
+        refreshComputeGroups,
+        createComputeGroup,
+        checkComputeTitleUnique,
         isHydrated,
       }}
     >
