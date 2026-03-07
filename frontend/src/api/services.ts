@@ -109,6 +109,15 @@ export const authAPI = {
 // Compute API
 export const computeAPI = {
   getAll: () => api.get<ComputeGroup[]>('/compute'),
-  create: (title: string) => api.post<ComputeGroup>('/compute', { title }),
+  create: (payload: {
+    title: string
+    pin: string
+    url: string
+    worker_size: number
+    epochs: number
+    batch_size: number
+  }) => api.post<ComputeGroup>('/compute', payload),
   validateTitle: (title: string) => api.post<{ available: boolean }>('/compute/validate-title', { title }),
+  verifyPIN: (groupId: string, pin: string) => api.post(`/compute/${groupId}/verify`, { pin }),
+  deleteGroup: (groupId: string) => api.delete(`/compute/${groupId}`),
 }
