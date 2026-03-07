@@ -139,6 +139,21 @@ resource "azurerm_container_app" "marketplace_backend" {
         secret_name = "groq-api-key"
       }
 
+      env {
+        name        = "GOOGLE_CLIENT_ID"
+        secret_name = "google-client-id"
+      }
+
+      env {
+        name        = "GOOGLE_CLIENT_SECRET"
+        secret_name = "google-client-secret"
+      }
+
+      env {
+        name  = "GOOGLE_CALLBACK_URL"
+        value = var.google_callback_url
+      }
+
       # Azure Blob Storage env
       env {
         name  = "AZURE_STORAGE_ACCOUNT_NAME"
@@ -153,26 +168,6 @@ resource "azurerm_container_app" "marketplace_backend" {
       env {
         name  = "AZURE_STORAGE_CONTAINER"
         value = data.azurerm_storage_container.products.name
-      }
-
-      env {
-        name  = "GOOGLE_CLIENT_ID"
-        value = var.google_client_id
-      }
-
-      env {
-        name        = "GOOGLE_CLIENT_SECRET"
-        secret_name = "google-client-secret"
-      }
-
-      env {
-        name  = "GOOGLE_CALLBACK_URL"
-        value = var.google_callback_url
-      }
-
-      env {
-        name  = "FRONTEND_URL"
-        value = var.frontend_url
       }
     }
 
@@ -190,15 +185,20 @@ resource "azurerm_container_app" "marketplace_backend" {
     value = var.groq_api_key
   }
 
-  # Storage connection string secret (read from existing storage account)
   secret {
-    name  = "azure-blob-conn"
-    value = data.azurerm_storage_account.marketplace.primary_connection_string
+    name  = "google-client-id"
+    value = var.google_client_id
   }
 
   secret {
     name  = "google-client-secret"
     value = var.google_client_secret
+  }
+
+  # Storage connection string secret (read from existing storage account)
+  secret {
+    name  = "azure-blob-conn"
+    value = data.azurerm_storage_account.marketplace.primary_connection_string
   }
 
   ingress {
