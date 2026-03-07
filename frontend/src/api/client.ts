@@ -52,7 +52,13 @@ api.interceptors.response.use(
       // Token expired or invalid, clear auth data
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
-      window.location.href = '/login'
+
+      // Only redirect if we're not already on the login or signup page
+      // This prevents infinite reload loops from background intervals (like chat polling)
+      const currentPath = window.location.pathname
+      if (currentPath !== '/login' && currentPath !== '/signup' && currentPath !== '/') {
+        window.location.href = '/login'
+      }
     }
     console.error('API Error:', error.response?.data || error.message)
     return Promise.reject(error)
