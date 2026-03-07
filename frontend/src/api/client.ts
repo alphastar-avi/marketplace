@@ -1,15 +1,12 @@
 import axios from 'axios'
 
 // Get base URL from env or use sensible defaults for dev/prod
-const envBase = import.meta.env.VITE_API_URL
+const envBase = (import.meta as any).env.VITE_API_URL as string | undefined
+const fallbackBase = import.meta.env.DEV
+  ? 'http://localhost:8080/api'
+  : 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
 
-let rawBaseUrl = envBase || ''
-if (!rawBaseUrl) {
-  rawBaseUrl = import.meta.env.PROD
-    ? 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
-    : 'http://localhost:8080/api'
-}
-
+const rawBaseUrl = envBase || fallbackBase
 const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`
 
 // Debug logging
@@ -52,17 +49,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Skip global logout for PIN verification — a 401 there just means wrong PIN
-      const requestUrl: string = error.config?.url || ''
-      const isVerifyEndpoint = requestUrl.includes('/verify')
-      // Skip redirect if already on an auth page — prevents infinite reload loops
-      const onAuthPage = ['/login', '/signup'].some(p => window.location.pathname.startsWith(p))
-      if (!isVerifyEndpoint && !onAuthPage) {
-        // Token expired or invalid, clear auth data
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('user')
-        window.location.href = '/login'
-      }
+      // Token expired or invalid, clear auth data
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
     }
     console.error('API Error:', error.response?.data || error.message)
     return Promise.reject(error)
