@@ -1,12 +1,15 @@
 import axios from 'axios'
 
 // Get base URL from env or use sensible defaults for dev/prod
-const envBase = (import.meta as any).env.VITE_API_URL as string | undefined
-const fallbackBase = import.meta.env.DEV
-  ? 'http://localhost:8080/api'
-  : 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
+const envBase = import.meta.env.VITE_API_URL
 
-const rawBaseUrl = envBase || fallbackBase
+let rawBaseUrl = envBase || ''
+if (!rawBaseUrl) {
+  rawBaseUrl = import.meta.env.PROD
+    ? 'https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api'
+    : 'http://localhost:8080/api'
+}
+
 const API_BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`
 
 // Debug logging
