@@ -154,6 +154,26 @@ resource "azurerm_container_app" "marketplace_backend" {
         name  = "AZURE_STORAGE_CONTAINER"
         value = data.azurerm_storage_container.products.name
       }
+
+      env {
+        name  = "GOOGLE_CLIENT_ID"
+        value = var.google_client_id
+      }
+
+      env {
+        name        = "GOOGLE_CLIENT_SECRET"
+        secret_name = "google-client-secret"
+      }
+
+      env {
+        name  = "GOOGLE_CALLBACK_URL"
+        value = var.google_callback_url
+      }
+
+      env {
+        name  = "FRONTEND_URL"
+        value = var.frontend_url
+      }
     }
 
     min_replicas = 0
@@ -174,6 +194,11 @@ resource "azurerm_container_app" "marketplace_backend" {
   secret {
     name  = "azure-blob-conn"
     value = data.azurerm_storage_account.marketplace.primary_connection_string
+  }
+
+  secret {
+    name  = "google-client-secret"
+    value = var.google_client_secret
   }
 
   ingress {

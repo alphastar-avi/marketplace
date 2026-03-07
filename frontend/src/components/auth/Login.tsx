@@ -5,6 +5,7 @@ import { useMarketplace } from '../../state/MarketplaceContext'
 import GlassCard from '../ui/GlassCard'
 import Spinner from '../ui/Spinner'
 import { uid } from '../../utils'
+import api from '../../api/client'
 
 export default function Login({ onLogin }: { onLogin?: () => void }) {
   const { updateUser } = useMarketplace()
@@ -59,7 +60,7 @@ export default function Login({ onLogin }: { onLogin?: () => void }) {
                   <div className="space-y-4">
                     <p className="font-semibold">Sign in</p>
                     <div className="flex gap-3">
-                      <button onClick={() => { console.log('Firing Google redirect...'); window.location.href = 'http://localhost:8080/api/auth/google/login' }} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8">
+                      <button onClick={() => { console.log('Firing Google redirect...'); window.location.href = `${api.defaults.baseURL}/auth/google/login` }} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8">
                         <Chrome size={16} /> <span className="text-sm">Google</span>
                       </button>
                       <button onClick={() => handleSignInClick('microsoft')} className="flex-1 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 bg-white/6 hover:bg-white/8">
