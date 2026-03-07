@@ -51,3 +51,24 @@ variable "storage_container_name" {
   description = "Name of the existing Blob container (e.g., 'products')"
   type        = string
 }
+
+variable "google_client_id" {
+  description = "Google OAuth Client ID"
+  type        = string
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth Client Secret"
+  type        = string
+  sensitive   = true
+}
+
+variable "google_callback_url" {
+  description = "Google OAuth Callback URL"
+  type        = string
+}
+
+variable "frontend_url" {
+  description = "Frontend URL for redirects"
+  type        = string
+}
