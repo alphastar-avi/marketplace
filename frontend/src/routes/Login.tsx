@@ -2,9 +2,9 @@ import React, { useRef, useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI } from '../api/services'
+import { api } from '../api/client'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus } from 'lucide-react'
 import Dither from '../components/ui/Dither'
-import api from '../api/client'
 
 export default function Login() {
   const [searchParams] = useSearchParams()

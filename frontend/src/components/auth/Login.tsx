@@ -5,7 +5,7 @@ import { useMarketplace } from '../../state/MarketplaceContext'
 import GlassCard from '../ui/GlassCard'
 import Spinner from '../ui/Spinner'
 import { uid } from '../../utils'
-import api from '../../api/client'
+import { api } from '../../api/client'
 
 export default function Login({ onLogin }: { onLogin?: () => void }) {
   const { updateUser } = useMarketplace()

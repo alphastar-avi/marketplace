@@ -49,15 +49,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Skip global logout for PIN verification — a 401 there just means wrong PIN
-      const requestUrl: string = error.config?.url || ''
-      const isVerifyEndpoint = requestUrl.includes('/verify')
-      // Skip redirect if already on an auth page — prevents infinite reload loops
-      const onAuthPage = ['/login', '/signup'].some(p => window.location.pathname.startsWith(p))
-      if (!isVerifyEndpoint && !onAuthPage) {
-        // Token expired or invalid, clear auth data
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('user')
+      // Token expired or invalid, clear auth data
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+
+      // Only redirect if we're not already on the login or signup page
+      // This prevents infinite reload loops from background intervals (like chat polling)
+      const currentPath = window.location.pathname
+      if (currentPath !== '/login' && currentPath !== '/signup' && currentPath !== '/') {
         window.location.href = '/login'
       }
     }
