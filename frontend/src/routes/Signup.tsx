@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMarketplace } from '../state/MarketplaceContext'
 import { authAPI, collegesAPI } from '../api/services'
+import { api } from '../api/client'
 import { College } from '../types'
 import { ArrowRight, Chrome, LayoutGrid, UserPlus, UserCheck } from 'lucide-react'
 import Dither from '../components/ui/Dither'
@@ -85,7 +86,7 @@ export default function Signup() {
   }
 
   const handleGoogle = () => {
-    console.info('Google SSO placeholder clicked')
+    window.location.href = `${api.defaults.baseURL}/auth/google/login`
   }
 
   const handleLoginNavigation = () => {
@@ -140,7 +141,20 @@ export default function Signup() {
             </div>
 
             <div className="mt-8 space-y-3">
-
+              <button
+                type="button"
+                onClick={handleGoogle}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition hover:border-white/30 hover:bg-white/10"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f1f5ff]/10 text-sm font-semibold text-white">
+                  <Chrome size={18} />
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-white">Continue with Google</p>
+                  <p className="text-xs text-white/50">Single sign-on</p>
+                </div>
+                <ArrowRight size={16} className="text-white/40 group-hover:text-white/70" />
+              </button>
 
               <button
                 type="button"

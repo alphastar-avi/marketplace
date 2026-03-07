@@ -71,12 +71,11 @@ jobs:
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
           -var="container_image_tag=${{ steps.version.outputs.version }}" \
           -var="groq_api_key=${{ secrets.GROQ_API_KEY }}" \
-          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
-          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}" \
           -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
           -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           -var="google_callback_url=${{ secrets.GOOGLE_CALLBACK_URL }}" \
-          -var="frontend_url=${{ secrets.FRONTEND_URL }}"
+          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
     - name: Terraform Apply
       run: |
@@ -85,12 +84,11 @@ jobs:
           -var="db_admin_password=${{ secrets.DB_PASSWORD }}" \
           -var="container_image_tag=${{ steps.version.outputs.version }}" \
           -var="groq_api_key=${{ secrets.GROQ_API_KEY }}" \
-          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
-          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}" \
           -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
           -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           -var="google_callback_url=${{ secrets.GOOGLE_CALLBACK_URL }}" \
-          -var="frontend_url=${{ secrets.FRONTEND_URL }}"
+          -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
     - name: Get Backend URL
       id: terraform-output
