@@ -135,6 +135,11 @@ resource "azurerm_container_app" "marketplace_backend" {
       }
 
       env {
+        name  = "FRONTEND_URL"
+        value = var.frontend_url
+      }
+      
+      env {
         name        = "GROQ_API_KEY"
         secret_name = "groq-api-key"
       }

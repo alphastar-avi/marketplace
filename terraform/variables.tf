@@ -68,3 +68,8 @@ variable "google_callback_url" {
   description = "Google OAuth Callback URL"
   type        = string
 }
+
+variable "frontend_url" {
+  description = "Frontend URL (e.g. https://green-mud-0476ecf00.1.azurestaticapps.net)"
+  type        = string
+}
