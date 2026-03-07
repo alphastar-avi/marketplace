@@ -185,10 +185,31 @@ func generateJWT(userID string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 
+func getCallbackURL() string {
+	callbackURL := os.Getenv("GOOGLE_CALLBACK_URL")
+	if callbackURL != "" {
+		return callbackURL
+	}
+	if os.Getenv("GIN_MODE") == "release" {
+		return "https://ca-marketplace-backend-dev.jollydesert-5443c3db.eastasia.azurecontainerapps.io/api/auth/google/callback"
+	}
+	return "http://localhost:8080/api/auth/google/callback"
+}
+
+func getFrontendURL() string {
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL != "" {
+		return frontendURL
+	}
+	if os.Getenv("GIN_MODE") == "release" {
+		return "https://green-mud-0476ecf00.1.azurestaticapps.net"
+	}
+	return "http://localhost:5173"
+}
+
 // ---------- GOOGLE OAUTH FLOW ----------
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
@@ -201,7 +222,7 @@ const oauthStateString = "randomized-secret-key-for-state"
 func GoogleAuthLogin(c *gin.Context) {
 	googleOauthConfig.ClientID = os.Getenv("GOOGLE_CLIENT_ID")
 	googleOauthConfig.ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
-	googleOauthConfig.RedirectURL = os.Getenv("GOOGLE_CALLBACK_URL")
+	googleOauthConfig.RedirectURL = getCallbackURL()
 
 	url := googleOauthConfig.AuthCodeURL(oauthStateString)
 	c.Redirect(http.StatusTemporaryRedirect, url)
@@ -214,6 +235,10 @@ func GoogleAuthCallback(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid oauth state"})
 		return
 	}
+
+	googleOauthConfig.ClientID = os.Getenv("GOOGLE_CLIENT_ID")
+	googleOauthConfig.ClientSecret = os.Getenv("GOOGLE_CLIENT_SECRET")
+	googleOauthConfig.RedirectURL = getCallbackURL()
 
 	code := c.Query("code")
 	token, err := googleOauthConfig.Exchange(c, code)
@@ -245,10 +270,7 @@ func GoogleAuthCallback(c *gin.Context) {
 	email, _ := userInfo["email"].(string)
 	name, _ := userInfo["name"].(string)
 
-	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
-		frontendURL = "http://localhost:5173"
-	}
+	frontendURL := getFrontendURL()
 
 	if email == "" {
 		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/signup?error=Could not extract email from Google")
