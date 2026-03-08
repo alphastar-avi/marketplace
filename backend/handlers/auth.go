@@ -247,7 +247,11 @@ func GoogleAuthCallback(c *gin.Context) {
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "http://localhost:5173" // Default for local dev
+		if os.Getenv("GIN_MODE") == "release" {
+			frontendURL = "https://green-mud-0476ecf00.1.azurestaticapps.net"
+		} else {
+			frontendURL = "http://localhost:5173" // Default for local dev
+		}
 	}
 
 	if email == "" {
