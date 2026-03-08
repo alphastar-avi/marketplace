@@ -74,6 +74,7 @@ jobs:
           -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
           -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           -var="google_callback_url=${{ secrets.GOOGLE_CALLBACK_URL }}" \
+          -var="frontend_url=${{ vars.FRONTEND_URL }}" \
           -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
           -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
@@ -87,6 +88,7 @@ jobs:
           -var="google_client_id=${{ secrets.GOOGLE_CLIENT_ID }}" \
           -var="google_client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           -var="google_callback_url=${{ secrets.GOOGLE_CALLBACK_URL }}" \
+          -var="frontend_url=${{ vars.FRONTEND_URL }}" \
           -var="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
           -var="storage_container_name=${{ secrets.STORAGE_CONTAINER_NAME }}"
           
