@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -252,8 +251,6 @@ func GoogleAuthCallback(c *gin.Context) {
 		frontendURL = "http://localhost:5173" // Default for local dev
 	}
 
-	log.Printf("Using Frontend URL for redirect: %s\n", frontendURL)
-
 	if email == "" {
 		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/signup?error=Could not extract email from Google")
 		return
@@ -262,8 +259,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	// Extract Domain from Google Workspace (hd)
 	hd, ok := userInfo["hd"].(string)
 	if !ok || hd == "" {
-		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Please sign in with your official college email, not a personal account.")), 60, "/", "", false, false)
-		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login")
+		errorMsg := url.QueryEscape("Please sign in with your official college email, not a personal account.")
+		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 		return
 	}
 
@@ -272,8 +269,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	// Lookup College to verify domain authorization
 	var college models.College
 	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
-		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Oops! It looks like your college isn't registered in the College Marketplace yet. Reach out to newcolleges@marketplace.com to get your campus added!")), 60, "/", "", false, false)
-		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login")
+		errorMsg := url.QueryEscape("Oops! It looks like your college isn't registered in the College Marketplace yet. Reach out to newcolleges@marketplace.com to get your campus added!")
+		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 		return
 	}
 
@@ -283,8 +280,8 @@ func GoogleAuthCallback(c *gin.Context) {
 		// User exists! Generate JWT and log them in
 		tokenString, errStr := generateJWT(existingUser.ID.String())
 		if errStr != nil {
-			c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Failed to generate token")), 60, "/", "", false, false)
-			c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login")
+			errorMsg := url.QueryEscape("Failed to generate token")
+			c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 			return
 		}
 
