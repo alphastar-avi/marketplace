@@ -246,9 +246,13 @@ func GoogleAuthCallback(c *gin.Context) {
 	name, _ := userInfo["name"].(string)
 
 	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
+	if os.Getenv("GIN_MODE") == "release" {
+		frontendURL = "https://green-mud-0476ecf00.1.azurestaticapps.net"
+	} else if frontendURL == "" {
 		frontendURL = "http://localhost:5173" // Default for local dev
 	}
+
+	log.Printf("Using Frontend URL for redirect: %s\n", frontendURL)
 
 	if email == "" {
 		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/signup?error=Could not extract email from Google")
