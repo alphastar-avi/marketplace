@@ -6,9 +6,9 @@ A full-stack, real-time marketplace platform designed exclusively for college st
 
 ## Features
 
-* **University-Gated Access**: JWT-based authentication ensuring only verified students from the same college can interact.
+* **University-Gated Access**: Authentication ensuring only verified students from the same college can interact.
 * **Real-time Chat**: Integrated messaging system allowing buyers and sellers to negotiate securely.
-* **Carpooling**: A dedicated section for students to offer or request rides to/from campus.
+* **Carpooling**: A dedicated section for students to offer or request rides to and from campus.
 * **Smart Filtering**: Distinct separation between "My Listings" and the global marketplace to prevent self-purchasing confusion.
 * **Purchase Requests**: Streamlined workflow for buyers to formally request an item.
 
@@ -16,67 +16,36 @@ A full-stack, real-time marketplace platform designed exclusively for college st
 
 ## Tech Stack
 
-**Frontend**
+### Frontend
 * React 19 + Vite
 * TailwindCSS v4
 * Framer Motion (Animations)
 * React Three Fiber (3D Elements)
 * React Router DOM
 
-**Backend**
+### Backend
 * Go (Golang)
 * Gin Web Framework
 * GORM (Object Relational Mapping)
-* PostgreSQL (Deployed via Azure)
 * JWT Authentication
 
----
-
-## Local Setup
-
-### 1. Database & Backend Configuration
-
-Make sure you have a PostgreSQL instance running. 
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Create a `.env` file (use `.env.example` as a reference if available) and add your database credentials and JWT Secret:
-   ```env
-   DB_HOST=localhost
-   DB_USER=postgres
-   DB_PASSWORD=yourpassword
-   DB_NAME=marketplace
-   DB_PORT=5432
-   JWT_SECRET=your_super_secret_key
-   ```
-3. Run the Go server (this will automatically migrate the database schema on port 8080):
-   ```bash
-   go run main.go
-   ```
-
-### 2. Frontend Configuration
-
-1. Open a new terminal and navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install the Node dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
+### Cloud & Infra
+* **Microsoft Azure**: Primary cloud provider.
+* **Azure Container Apps**: Serverless container hosting for the backend application.
+* **Azure Database for PostgreSQL Flexible Server**: Primary relational database.
+* **Azure Blob Storage**: Cloud storage for product images and assets.
+* **Terraform**: Infrastructure as Code (IaC) for provisioning and managing all Azure resources.
 
 ---
 
-## Project Structure
+## Repository Structure
 
-* `/backend/handlers` - Core API logic (Products, Auth, Chats, Carpools)
-* `/backend/models` - GORM database schemas 
-* `/frontend/src/components` - Reusable UI widgets and pages
-* `/frontend/src/api` - Axios interceptors and backend communication services
-* `/frontend/src/state` - Global React Context management
+### Folders
+* `/backend` - Core Go API logic (Products, Auth, Chats, Carpools).
+* `/frontend` - React SPA (Single Page Application) with 3D components and Tailwind styling.
+* `/terraform` - Azure infrastructure configurations.
+* `/computeShare` - Standalone PyTorch federated learning module.
+
+### Branching Strategy
+* **`main`**: The active development branch. All new features and bug fixes are merged here first.
+* **`prod`**: The production branch. This branch is directly linked to Terraform and Azure deployments. Code pushed or merged into `prod` automatically triggers the CI/CD pipeline to provision infrastructure and deploy the application.
