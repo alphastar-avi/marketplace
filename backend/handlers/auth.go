@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log"
@@ -188,7 +187,7 @@ func generateJWT(userID string) (string, error) {
 // ---------- GOOGLE OAUTH FLOW ----------
 
 var googleOauthConfig = &oauth2.Config{
-	RedirectURL:  "http://localhost:8080/api/auth/google/callback", // Or os.Getenv("GOOGLE_CALLBACK_URL")
+	RedirectURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
@@ -245,16 +244,23 @@ func GoogleAuthCallback(c *gin.Context) {
 	email, _ := userInfo["email"].(string)
 	name, _ := userInfo["name"].(string)
 
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if os.Getenv("GIN_MODE") == "release" {
+		frontendURL = "https://green-mud-0476ecf00.1.azurestaticapps.net"
+	} else if frontendURL == "" {
+		frontendURL = "http://localhost:5173" // Default for local dev
+	}
+
 	if email == "" {
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/signup?error=Could not extract email from Google")
+		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/signup?error=Could not extract email from Google")
 		return
 	}
 
 	// Extract Domain from Google Workspace (hd)
 	hd, ok := userInfo["hd"].(string)
 	if !ok || hd == "" {
-		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Please sign in with your official college email, not a personal account.")), 60, "/", "localhost", false, false)
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
+		errorMsg := url.QueryEscape("Please sign in with your official college email, not a personal account.")
+		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 		return
 	}
 
@@ -263,8 +269,8 @@ func GoogleAuthCallback(c *gin.Context) {
 	// Lookup College to verify domain authorization
 	var college models.College
 	if err := config.DB.Where("domain = ?", domain).First(&college).Error; err != nil {
-		c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Oops! It looks like your college isn't registered in the College Marketplace yet. Reach out to newcolleges@marketplace.com to get your campus added!")), 60, "/", "localhost", false, false)
-		c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
+		errorMsg := url.QueryEscape("Oops! It looks like your college isn't registered in the College Marketplace yet. Reach out to newcolleges@marketplace.com to get your campus added!")
+		c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 		return
 	}
 
@@ -274,13 +280,13 @@ func GoogleAuthCallback(c *gin.Context) {
 		// User exists! Generate JWT and log them in
 		tokenString, errStr := generateJWT(existingUser.ID.String())
 		if errStr != nil {
-			c.SetCookie("oauth_error", base64.StdEncoding.EncodeToString([]byte("Failed to generate token")), 60, "/", "localhost", false, false)
-			c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/login")
+			errorMsg := url.QueryEscape("Failed to generate token")
+			c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/login?error="+errorMsg)
 			return
 		}
 
 		// Redirect to frontend login listener with the token
-		redirectURL := "http://localhost:5173/login?token=" + tokenString
+		redirectURL := frontendURL + "/login?token=" + tokenString
 		c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 		return
 	}
@@ -290,6 +296,6 @@ func GoogleAuthCallback(c *gin.Context) {
 	escapedName := url.QueryEscape(name)
 	escapedCollege := url.QueryEscape(college.Name)
 
-	redirectURL := "http://localhost:5173/signup?email=" + escapedEmail + "&name=" + escapedName + "&college=" + escapedCollege
+	redirectURL := frontendURL + "/signup?email=" + escapedEmail + "&name=" + escapedName + "&college=" + escapedCollege
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }
