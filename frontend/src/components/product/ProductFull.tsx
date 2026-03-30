@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, Heart, Share2, Trash2 } from 'lucide-react'
+import { ArrowLeft, Heart, Share2, Archive } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
 import GlassCard from '../ui/GlassCard'
 import ShareDropdown from '../ui/ShareDropdown'
 
 export default function ProductFull({ productId, onBack, onOpenChat }: { productId: string; onBack: () => void; onOpenChat: (c: string) => void }) {
-  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, deleteProduct, updateProductStatus, purchaseRequests } = useMarketplace()
+  const { products, user, createPurchaseRequest, setProducts, favorites, toggleFavorite, archiveProduct, updateProductStatus, purchaseRequests } = useMarketplace()
   const prod = products.find((p) => p.id === productId)
   const [mainIndex, setMainIndex] = useState(0)
   const [showRequestSent, setShowRequestSent] = useState(false)
@@ -28,13 +28,13 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
     }
   }
 
-  const handleRemoveListing = async () => {
-    if (confirm('Are you sure you want to remove this listing?')) {
+  const handleArchiveListing = async () => {
+    if (confirm('This will hide your listing from the marketplace. It will be permanently deleted after 30 days. Are you sure you want to archive?')) {
       try {
-        await deleteProduct(prod.id)
+        await archiveProduct(prod.id)
         onBack()
       } catch (error) {
-        console.error('Failed to delete product:', error)
+        console.error('Failed to archive product:', error)
       }
     }
   }
@@ -159,9 +159,9 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
                   )}
                 </div>
                 {isOwner && (
-                  <button onClick={handleRemoveListing} className="w-full py-2 rounded-md bg-red-500 hover:bg-red-600 font-semibold transition-colors">
-                    <Trash2 size={16} className="inline mr-2" />
-                    Remove Listing
+                  <button onClick={handleArchiveListing} className="w-full py-2 rounded-md bg-zinc-700 hover:bg-zinc-600 font-semibold transition-colors">
+                    <Archive size={16} className="inline mr-2" />
+                    Archive Listing
                   </button>
                 )}
               </div>

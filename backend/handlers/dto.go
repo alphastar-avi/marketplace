@@ -21,6 +21,8 @@ type ProductDTO struct {
 	Status      string     `json:"status"`
 	SellerID    string     `json:"sellerId"`
 	PostedAt    string     `json:"postedAt"`
+	IsArchived  bool       `json:"isArchived"`
+	ArchivedAt  *string    `json:"archivedAt,omitempty"`
 	Seller      *SellerDTO `json:"seller,omitempty"`
 }
 
@@ -179,6 +181,12 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 		Status:      product.Status,
 		SellerID:    product.SellerID.String(),
 		PostedAt:    product.CreatedAt.Format("2006-01-02T15:04:05.000Z"),
+		IsArchived:  product.IsArchived,
+	}
+
+	if product.ArchivedAt != nil {
+		archivedAtStr := product.ArchivedAt.Format("2006-01-02T15:04:05.000Z")
+		dto.ArchivedAt = &archivedAtStr
 	}
 
 	// Include seller information if available
