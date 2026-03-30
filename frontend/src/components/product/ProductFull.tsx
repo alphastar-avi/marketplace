@@ -29,7 +29,7 @@ export default function ProductFull({ productId, onBack, onOpenChat }: { product
   }
 
   const handleArchiveListing = async () => {
-    if (confirm('This will hide your listing from the marketplace. It will be permanently deleted after 30 days. Are you sure you want to archive?')) {
+    if (confirm('This will hide your listing from the marketplace. It will be permanently deleted after 7 days. Are you sure you want to archive?')) {
       try {
         await archiveProduct(prod.id)
         onBack()

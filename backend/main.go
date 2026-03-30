@@ -65,7 +65,7 @@ func main() {
 }
 
 // StartCleanupJob runs a background go routine that checks once every 24 hours
-// for any products that have been archived for more than 30 days and hard deletes them.
+// for any products that have been archived for more than 7 days and hard deletes them.
 func StartCleanupJob() {
 	go func() {
 		for {
@@ -79,11 +79,11 @@ func StartCleanupJob() {
 }
 
 func cleanupArchivedProducts() {
-	// Find all products where is_archived = true and archived_at is older than 30 days
-	thirtyDaysAgo := time.Now().Add(-30 * 24 * time.Hour)
+	// Find all products where is_archived = true and archived_at is older than 7 days
+	sevenDaysAgo := time.Now().Add(-7 * 24 * time.Hour)
 	
 	var oldArchivedProducts []models.Product
-	if err := config.DB.Where("is_archived = ? AND archived_at < ?", true, thirtyDaysAgo).Find(&oldArchivedProducts).Error; err != nil {
+	if err := config.DB.Where("is_archived = ? AND archived_at < ?", true, sevenDaysAgo).Find(&oldArchivedProducts).Error; err != nil {
 		log.Printf("Cleanup Job Error: Failed to fetch archived products: %v\n", err)
 		return
 	}
