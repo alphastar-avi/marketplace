@@ -284,6 +284,29 @@ func HardDeleteProduct(db *gorm.DB, productID uuid.UUID) error {
 		// 1. Get and delete chats + messages associated with the product
 		var chats []models.Chat
 		if err := tx.Where("product_id = ?", productID).Find(&chats).Error; err != nil {
+	if err := config.DB.Transaction(func(tx *gorm.DB) error {
+		// Delete chats associated with this product
+		var chats []models.Chat
+		if err := tx.Where("product_id = ?", product.ID).Find(&chats).Error; err != nil {
+			return err
+		}
+
+		for _, chat := range chats {
+			// Delete messages for each chat
+			if err := tx.Where("chat_id = ?", chat.ID).Delete(&models.Message{}).Error; err != nil {
+				return err
+			}
+			// Clear chat participants (v2)
+			if err := tx.Model(&chat).Association("Participants").Clear(); err != nil {
+				return err
+			}
+			// Delete the chat itself
+			if err := tx.Delete(&chat).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := tx.Where("product_id = ?", product.ID).Delete(&models.PurchaseRequest{}).Error; err != nil {
 			return err
 		}
 
