@@ -106,9 +106,45 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                 {!editing ? (
                   <div className="font-semibold">{user?.name}</div>
                 ) : (
-                  <input value={name} onChange={(e) => setName(e.target.value)} className="p-2 mt-2 bg-transparent border rounded-md w-full text-center" />
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="p-2 mt-2 bg-transparent border border-white/10 rounded-md w-full text-center focus:outline-none focus:border-white/30"
+                  />
                 )}
-                <div className="text-xs opacity-70">{user?.year} • {user?.department}</div>
+
+                {/* Year & Department — view or edit */}
+                {!editing ? (
+                  <div className="text-xs opacity-60 text-center">
+                    {user?.year || user?.department
+                      ? [user?.year, user?.department].filter(Boolean).join(' • ')
+                      : <span className="italic opacity-50">No year or department set</span>
+                    }
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col gap-2 mt-1">
+                    <select
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      className="p-2 bg-zinc-900 border border-white/10 rounded-md w-full text-center text-sm focus:outline-none focus:border-white/30 appearance-none"
+                    >
+                      <option value="" className="bg-zinc-900">Select Year</option>
+                      <option value="Freshman" className="bg-zinc-900">Freshman</option>
+                      <option value="Sophomore" className="bg-zinc-900">Sophomore</option>
+                      <option value="Junior" className="bg-zinc-900">Junior</option>
+                      <option value="Senior" className="bg-zinc-900">Senior</option>
+                      <option value="Graduate" className="bg-zinc-900">Graduate</option>
+                    </select>
+                    <input
+                      value={dept}
+                      onChange={(e) => setDept(e.target.value)}
+                      placeholder="Department (e.g. CSE)"
+                      className="p-2 bg-transparent border border-white/10 rounded-md w-full text-center text-sm focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                )}
+
                 {editing ? (
                   <div className="mt-3 flex gap-2">
                     <button onClick={handleSave} className="py-2 px-3 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400">Save</button>
