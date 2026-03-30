@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, MapPin, Users, Calendar, Clock, Loader2, RefreshCw } from 'lucide-react'
 import FloatingBottomNav from '../components/navigation/FloatingBottomNav'
+import { ScrollHideProvider } from '../context/ScrollHideContext'
 import GlassCard from '../components/ui/GlassCard'
 import { useMarketplace } from '../state/MarketplaceContext'
 import type { CarpoolRide, CarpoolJoinRequest } from '../types'
@@ -110,18 +111,19 @@ export default function CarpoolRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans pb-32">
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-8">
-        <div className="flex items-center justify-between">
+    <ScrollHideProvider>
+      <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans pb-32">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 sm:py-10 space-y-6 sm:space-y-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.4em] text-white/50">Community</p>
-            <h1 className="text-3xl font-bold mt-2">Carpooling Hub</h1>
-            <p className="text-sm text-white/70 mt-1">Share rides, split costs, and travel with classmates.</p>
+            <p className="text-xs sm:text-sm uppercase tracking-[0.4em] text-white/50">Community</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">Carpooling Hub</h1>
+            <p className="text-xs sm:text-sm text-white/70 mt-1">Share rides, split costs, and travel with classmates.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => refreshCarpools()}
-              className="p-2 rounded-full border border-white/10 text-white/50 hover:bg-white/5 transition hover:text-white"
+              className="p-2 rounded-full border border-white/10 text-white/50 hover:bg-white/5 transition hover:text-white shrink-0"
               title="Refresh"
             >
               <RefreshCw size={18} />
@@ -129,7 +131,7 @@ export default function CarpoolRoute() {
             <div className="flex bg-white/5 p-1 rounded-full border border-white/10">
               <button
                 onClick={() => setShowOnlyMine(false)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${!showOnlyMine
+                className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${!showOnlyMine
                   ? 'bg-white text-slate-900 shadow-[0_2px_10px_rgba(255,255,255,0.2)]'
                   : 'text-white/50 hover:text-white'}`}
               >
@@ -137,7 +139,7 @@ export default function CarpoolRoute() {
               </button>
               <button
                 onClick={() => setShowOnlyMine(true)}
-                className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-300 ${showOnlyMine
+                className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 ${showOnlyMine
                   ? 'bg-white text-slate-900 shadow-[0_2px_10px_rgba(255,255,255,0.2)]'
                   : 'text-white/50 hover:text-white'}`}
               >
@@ -169,25 +171,27 @@ export default function CarpoolRoute() {
               <div key={ride.id} className={`${isFull ? 'opacity-60 grayscale-[20%]' : ''} transition-all`}>
                 <GlassCard>
                   <div className="flex flex-col gap-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-semibold">{ride.title}{isFull && <span className="text-sm font-normal text-white/50 ml-2">( slots filled )</span>}</h3>
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${ride.direction === 'to_college'
-                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              }`}
-                          >
-                            {ride.direction === 'to_college' ? 'To College' : 'From College'}
-                          </span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base sm:text-xl font-semibold leading-snug">{ride.title}{isFull && <span className="text-xs sm:text-sm font-normal text-white/50 ml-1">( slots filled )</span>}</h3>
+                            <span
+                              className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${ride.direction === 'to_college'
+                                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                }`}
+                            >
+                              {ride.direction === 'to_college' ? 'To College' : 'From College'}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-white/70 mt-1"><MapPin size={12} className="inline mr-1 opacity-60" />To: {ride.destination} • From: {ride.pickupPoint}</p>
                         </div>
-                        <p className="text-sm text-white/70"><MapPin size={14} className="inline mr-1 opacity-60" />To: {ride.destination} • From: {ride.pickupPoint}</p>
                       </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1"><Users size={16} />{ride.seatsAvailable} seats left</div>
-                        <div className="flex items-center gap-1"><Calendar size={16} />{new Date(ride.departureDate).toLocaleDateString()}</div>
-                        <div className="flex items-center gap-1"><Clock size={16} />{ride.departureTime}</div>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-white/70">
+                        <div className="flex items-center gap-1"><Users size={14} />{ride.seatsAvailable} seats left</div>
+                        <div className="flex items-center gap-1"><Calendar size={14} />{new Date(ride.departureDate).toLocaleDateString()}</div>
+                        <div className="flex items-center gap-1"><Clock size={14} />{ride.departureTime}</div>
                       </div>
                     </div>
 
@@ -404,5 +408,6 @@ export default function CarpoolRoute() {
         )}
       </AnimatePresence>
     </div>
+    </ScrollHideProvider>
   )
 }
