@@ -6,6 +6,7 @@ import { useMarketplace } from '../state/MarketplaceContext'
 import Marketplace from '../components/marketplace/Marketplace'
 import ChatPage from '../components/chat/ChatPage'
 import FloatingBottomNav from '../components/navigation/FloatingBottomNav'
+import { ScrollHideProvider } from '../context/ScrollHideContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function MarketplaceRoute() {
@@ -33,12 +34,14 @@ export default function MarketplaceRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans">
-      <motion.div initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }}>
-        <Marketplace onOpenChat={openChat} />
-      </motion.div>
-      <AnimatePresence>{activeChat && <ChatPage chatId={activeChat} onClose={closeChat} />}</AnimatePresence>
-      <FloatingBottomNav />
-    </div>
+    <ScrollHideProvider>
+      <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans">
+        <motion.div initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }}>
+          <Marketplace onOpenChat={openChat} />
+        </motion.div>
+        <AnimatePresence>{activeChat && <ChatPage chatId={activeChat} onClose={closeChat} />}</AnimatePresence>
+        <FloatingBottomNav />
+      </div>
+    </ScrollHideProvider>
   )
 }

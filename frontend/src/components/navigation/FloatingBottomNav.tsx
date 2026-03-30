@@ -1,6 +1,7 @@
 import { ComponentType } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Home, Monitor } from 'lucide-react'
+import { useScrollHidden } from '../../context/ScrollHideContext'
 
 const CarpoolIcon = ({ size = 18 }: { size?: number }) => (
   <svg
@@ -57,9 +58,14 @@ const navItems: NavItem[] = [
 export default function FloatingBottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
+  const hidden = useScrollHidden()
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+    <div
+      className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-transform duration-300 ${
+        hidden ? 'translate-y-[calc(100%+1.5rem)]' : 'translate-y-0'
+      }`}
+    >
       <div className="flex items-center gap-1.5 rounded-[26px] border border-white/10 bg-[rgba(7,10,20,0.82)] backdrop-blur-2xl px-2 py-1.5 shadow-[0_18px_40px_rgba(4,6,16,0.55)]">
         {navItems.map(({ key, label, path, icon: Icon, isActive }) => {
           const active = Boolean(isActive?.(location.pathname))
