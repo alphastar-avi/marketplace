@@ -10,7 +10,7 @@ import GlassCard from '../ui/GlassCard'
 export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenChat: (c: string) => void; onBack: () => void; onViewProduct: (productId: string) => void }) {
   const { user, updateUser, setUser, products, favorites } = useMarketplace()
   const [editing, setEditing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'listings' | 'favorites'>('listings')
+  const [activeTab, setActiveTab] = useState<'listings' | 'favorites' | 'archived'>('listings')
   const [name, setName] = useState(user?.name || '')
   const [year, setYear] = useState(user?.year || '')
   const [dept, setDept] = useState(user?.department || '')
@@ -24,8 +24,9 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
     setDept(user?.department || '')
   }, [user])
 
-  const myListings = products.filter((p: Product) => p.sellerId === user?.id)
-  const favoriteProducts = products.filter((p: Product) => favorites.includes(p.id))
+  const myListings = products.filter((p: Product) => p.sellerId === user?.id && !p.isArchived)
+  const archivedListings = products.filter((p: Product) => p.sellerId === user?.id && p.isArchived)
+  const favoriteProducts = products.filter((p: Product) => favorites.includes(p.id) && !p.isArchived)
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -105,9 +106,45 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                 {!editing ? (
                   <div className="font-semibold">{user?.name}</div>
                 ) : (
-                  <input value={name} onChange={(e) => setName(e.target.value)} className="p-2 mt-2 bg-transparent border rounded-md w-full text-center" />
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className="p-2 mt-2 bg-transparent border border-white/10 rounded-md w-full text-center focus:outline-none focus:border-white/30"
+                  />
                 )}
-                <div className="text-xs opacity-70">{user?.year} • {user?.department}</div>
+
+                {/* Year & Department — view or edit */}
+                {!editing ? (
+                  <div className="text-xs opacity-60 text-center">
+                    {user?.year || user?.department
+                      ? [user?.year, user?.department].filter(Boolean).join(' • ')
+                      : <span className="italic opacity-50">No year or department set</span>
+                    }
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col gap-2 mt-1">
+                    <select
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      className="p-2 bg-zinc-900 border border-white/10 rounded-md w-full text-center text-sm focus:outline-none focus:border-white/30 appearance-none"
+                    >
+                      <option value="" className="bg-zinc-900">Select Year</option>
+                      <option value="Freshman" className="bg-zinc-900">Freshman</option>
+                      <option value="Sophomore" className="bg-zinc-900">Sophomore</option>
+                      <option value="Junior" className="bg-zinc-900">Junior</option>
+                      <option value="Senior" className="bg-zinc-900">Senior</option>
+                      <option value="Graduate" className="bg-zinc-900">Graduate</option>
+                    </select>
+                    <input
+                      value={dept}
+                      onChange={(e) => setDept(e.target.value)}
+                      placeholder="Department (e.g. CSE)"
+                      className="p-2 bg-transparent border border-white/10 rounded-md w-full text-center text-sm focus:outline-none focus:border-white/30"
+                    />
+                  </div>
+                )}
+
                 {editing ? (
                   <div className="mt-3 flex gap-2">
                     <button onClick={handleSave} className="py-2 px-3 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400">Save</button>
@@ -134,12 +171,15 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
               <button onClick={() => setActiveTab('favorites')} className={`text-lg font-semibold transition-colors ${activeTab === 'favorites' ? 'text-white' : 'text-gray-400'}`}>
                 Favorites ({favoriteProducts.length})
               </button>
+              <button onClick={() => setActiveTab('archived')} className={`text-lg font-semibold transition-colors ${activeTab === 'archived' ? 'text-white' : 'text-gray-400'}`}>
+                Archived ({archivedListings.length})
+              </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {activeTab === 'listings'
-                ? myListings.length === 0
-                  ? (<div className="col-span-full p-6 text-center opacity-80">You have no listings yet</div>)
+              {activeTab === 'listings' && (
+                myListings.length === 0
+                  ? (<div className="col-span-full p-6 text-center opacity-80">You have no active listings</div>)
                   : myListings.map((p) => (
                     <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
                       {p.images && p.images.length > 0 ? (
@@ -152,7 +192,10 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                       {p.status === 'sold' && <div className="text-xs text-red-400 mt-1">Sold</div>}
                     </div>
                   ))
-                : favoriteProducts.length === 0
+              )}
+
+              {activeTab === 'favorites' && (
+                favoriteProducts.length === 0
                   ? (<div className="col-span-full p-6 text-center opacity-80">You have no favorites yet</div>)
                   : favoriteProducts.map((p) => (
                     <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors" onClick={() => onViewProduct(p.id)}>
@@ -165,7 +208,25 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                       <div className="text-xs opacity-70">₹{p.price}</div>
                       {p.status === 'sold' && <div className="text-xs text-red-400 mt-1">Sold</div>}
                     </div>
-                  ))}
+                  ))
+              )}
+
+              {activeTab === 'archived' && (
+                archivedListings.length === 0
+                  ? (<div className="col-span-full p-6 text-center opacity-80">You have no archived listings</div>)
+                  : archivedListings.map((p) => (
+                    <div key={p.id} className="p-3 bg-white/3 rounded-md cursor-pointer hover:bg-white/6 transition-colors opacity-70" onClick={() => onViewProduct(p.id)}>
+                      {p.images && p.images.length > 0 ? (
+                        <img src={p.images[0]} className="h-28 w-full object-cover rounded-md mb-2 grayscale" />
+                      ) : (
+                        <div className="h-28 w-full rounded-md mb-2 bg-white/6 grid place-items-center text-xs opacity-70">No image</div>
+                      )}
+                      <div className="font-semibold">{p.title}</div>
+                      <div className="text-xs opacity-70">₹{p.price}</div>
+                      <div className="text-xs text-orange-400 mt-1">Archived</div>
+                    </div>
+                  ))
+              )}
             </div>
           </div>
         </div>

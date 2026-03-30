@@ -10,7 +10,7 @@ type MarketplaceContextType = {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
   addProduct: (p: Omit<Product, 'id' | 'postedAt'>) => Promise<Product>
   updateProductStatus: (productId: string, status: Product['status']) => Promise<void>
-  deleteProduct: (productId: string) => Promise<void>
+  archiveProduct: (productId: string) => Promise<void>
   user: UserType | null
   updateUser: (u: Partial<UserType>) => Promise<void>
   setUser: React.Dispatch<React.SetStateAction<UserType | null>>
@@ -505,20 +505,21 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const deleteProduct = async (productId: string) => {
+  const archiveProduct = async (productId: string) => {
     try {
-      console.log('Attempting to delete product:', productId)
-      const response = await productsAPI.delete(productId)
-      console.log('Delete response:', response)
-      setProducts((s) => s.filter((p) => p.id !== productId))
-      console.log('Product deleted successfully from local state')
+      console.log('Attempting to archive product:', productId)
+      const response = await productsAPI.archive(productId)
+      console.log('Archive response:', response)
+      // Update local state to mark as archived instead of removing
+      setProducts((s) => s.map((p) => (p.id === productId ? { ...p, isArchived: true } : p)))
+      console.log('Product archived successfully in local state')
     } catch (error: any) {
-      console.error('Failed to delete product:', error)
+      console.error('Failed to archive product:', error)
       if (error.response) {
         console.error('Error response:', error.response.data)
         console.error('Error status:', error.response.status)
       }
-      alert('❌ Failed to delete product. Please try again.')
+      alert('❌ Failed to archive product. Please try again.')
     }
   }
 
@@ -541,7 +542,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         setProducts,
         addProduct,
         updateProductStatus,
-        deleteProduct,
+        archiveProduct,
         user,
         updateUser,
         setUser,
