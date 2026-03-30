@@ -31,7 +31,7 @@ func SetupRoutes(r *gin.Engine) {
 			products.POST("", middleware.AuthMiddleware(), handlers.CreateProduct)
 			products.GET("/:id", middleware.OptionalAuthMiddleware(), handlers.GetProduct)
 			products.PUT("/:id", middleware.AuthMiddleware(), handlers.UpdateProduct)
-			products.DELETE("/:id", middleware.AuthMiddleware(), handlers.DeleteProduct)
+			products.PUT("/:id/archive", middleware.AuthMiddleware(), handlers.ArchiveProduct)
 			// AI description generation endpoints
 			products.POST("/generate-description", middleware.AuthMiddleware(), handlers.GenerateDescription)
 			products.POST("/generate-description-with-files", middleware.AuthMiddleware(), handlers.GenerateDescriptionWithFiles)

@@ -18,6 +18,8 @@ export type Product = {
     department: string
     avatar: string
   }
+  isArchived?: boolean
+  archivedAt?: string
 }
 
 export type College = {

@@ -19,7 +19,7 @@ export const productsAPI = {
       'Content-Type': undefined,
     } as any,
   }),
-  delete: (id: string) => api.delete(`/products/${id}`),
+  archive: (id: string) => api.put(`/products/${id}/archive`),
   // AI description generation
   generateDescription: (data: { title: string; category: string; image_urls: string[] }) =>
     api.post<{ description: string; model: string; processing_time_ms: number }>('/products/generate-description', data),

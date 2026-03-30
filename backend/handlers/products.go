@@ -7,6 +7,7 @@ import (
 	"marketplace-backend/models"
 	"marketplace-backend/storage"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -31,8 +32,9 @@ func GetProducts(c *gin.Context) {
 		return
 	}
 
-	// Filter products strictly by the user's college
-	result := config.DB.Where("college_id = ?", user.CollegeID).Preload("Seller").Preload("College").Order("created_at desc").Find(&products)
+	// Filter products strictly by the user's college and exclude archived unless owned by user
+	query := config.DB.Where("college_id = ? AND (is_archived = false OR seller_id = ?)", user.CollegeID, user.ID)
+	result := query.Preload("Seller").Preload("College").Order("created_at desc").Find(&products)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch products"})
 		return
@@ -230,8 +232,8 @@ func UpdateProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
-// DeleteProduct deletes a product
-func DeleteProduct(c *gin.Context) {
+// ArchiveProduct soft-deletes a product by setting is_archived to true
+func ArchiveProduct(c *gin.Context) {
 	// Get authenticated user ID
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -255,25 +257,61 @@ func DeleteProduct(c *gin.Context) {
 
 	// Check if user owns this product
 	if product.SellerID != userID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own products"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only archive your own products"})
 		return
 	}
 
-	if err := config.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("product_id = ?", product.ID).Delete(&models.PurchaseRequest{}).Error; err != nil {
+	if product.IsArchived {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Product is already archived"})
+		return
+	}
+
+	// Soft delete / archive
+	now := time.Now()
+	product.IsArchived = true
+	product.ArchivedAt = &now
+	if err := config.DB.Save(&product).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to archive product"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product archived successfully"})
+}
+
+// HardDeleteProduct completely removes a product and all of its dependencies
+func HardDeleteProduct(db *gorm.DB, productID uuid.UUID) error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		// 1. Get and delete chats + messages associated with the product
+		var chats []models.Chat
+		if err := tx.Where("product_id = ?", productID).Find(&chats).Error; err != nil {
 			return err
 		}
-		if err := tx.Where("product_id = ?", product.ID).Delete(&models.Favorite{}).Error; err != nil {
+
+		for _, chat := range chats {
+			if err := tx.Where("chat_id = ?", chat.ID).Delete(&models.Message{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(&chat).Association("Participants").Clear(); err != nil {
+				return err
+			}
+			if err := tx.Delete(&chat).Error; err != nil {
+				return err
+			}
+		}
+
+		// 2. Delete purchase requests and favorites
+		if err := tx.Where("product_id = ?", productID).Delete(&models.PurchaseRequest{}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&product).Error; err != nil {
+		if err := tx.Where("product_id = ?", productID).Delete(&models.Favorite{}).Error; err != nil {
 			return err
 		}
+
+		// 3. Delete the product itself
+		if err := tx.Where("id = ?", productID).Delete(&models.Product{}).Error; err != nil {
+			return err
+		}
+
 		return nil
-	}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
+	})
 }

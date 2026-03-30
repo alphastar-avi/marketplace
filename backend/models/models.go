@@ -42,13 +42,15 @@ type Product struct {
 	Condition   string    `json:"condition" gorm:"not null"` // New, Like New, Good, Fair, For Parts
 	Category    string    `json:"category" gorm:"not null"`
 	Tags        string    `json:"tags" gorm:"type:text"`             // JSON string for now
-	Status      string    `json:"status" gorm:"default:'available'"` // available, requested, sold
-	SellerID    uuid.UUID `json:"seller_id" gorm:"type:uuid;not null"`
-	Seller      User      `json:"seller" gorm:"foreignKey:SellerID"`
-	CollegeID   uuid.UUID `json:"college_id" gorm:"type:uuid;not null"`
-	College     College   `json:"college" gorm:"foreignKey:CollegeID"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Status      string     `json:"status" gorm:"default:'available'"` // available, requested, sold
+	SellerID    uuid.UUID  `json:"seller_id" gorm:"type:uuid;not null"`
+	Seller      User       `json:"seller" gorm:"foreignKey:SellerID"`
+	CollegeID   uuid.UUID  `json:"college_id" gorm:"type:uuid;not null"`
+	College     College    `json:"college" gorm:"foreignKey:CollegeID"`
+	IsArchived  bool       `json:"is_archived" gorm:"default:false"`
+	ArchivedAt  *time.Time `json:"archived_at"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 // Chat represents a conversation between users
