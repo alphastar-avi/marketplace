@@ -236,7 +236,11 @@ export default function ComputeRoute() {
         groupWorkerSize: string
         groupEpoch: string
         groupBatchSize: string
-    }) => (
+    }) => {
+        const [showHostFiles, setShowHostFiles] = useState(false)
+        const [showWorkerFiles, setShowWorkerFiles] = useState(false)
+        
+        return (
         <div className="grid gap-4">
             <div className="text-sm text-white/70 leading-relaxed">
                 <button
@@ -284,59 +288,94 @@ export default function ComputeRoute() {
             </div>
 
             {instrActiveTab === 'host' ? (
-                <div className="space-y-4">
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingServer}
-                            onClick={async () => {
-                                if (!serverCode) { alert("Server code is still loading."); return; }
-                                try { setIsCopyingServer(true); await copyToClipboardRobust(serverCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingServer(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingServer ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">server.py</code></span>
+                <div className="space-y-5 flex flex-col pt-1">
+                    <div className="bg-gradient-to-tr from-[#0b1220] to-[#10172b] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">Download Full Architecture</h3>
+                            <p className="text-xs text-white/50 mt-1">Get the complete cluster scripts as a convenient .zip natively packaged from GitHub.</p>
+                        </div>
+                        <a href="https://github.com/alphastar-avi/computeShare/archive/refs/heads/main.zip"
+                            target="_blank" rel="noopener noreferrer"
+                            className="shrink-0 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 border border-transparent text-white rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .zip
+                        </a>
                     </div>
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingModel}
-                            onClick={async () => {
-                                if (!modelCode) { alert("Model code is still loading."); return; }
-                                try { setIsCopyingModel(true); await copyToClipboardRobust(modelCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingModel(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingModel ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">model.py</code></span>
+                    
+                    <div className="pt-2 pb-1 mt-1">
+                        <div className="relative mt-2 mb-3">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowHostFiles(!showHostFiles)}
+                                    className="bg-[#0b1220] px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-white/50 tracking-wider uppercase hover:text-white hover:border-white/20 transition-all outline-none flex items-center gap-2 shadow-sm"
+                                >
+                                    Or Copy Individual Files
+                                    <svg className={`w-3.5 h-3.5 transition-transform ${showHostFiles ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingUtils}
-                            onClick={async () => {
-                                if (!utilsCode) { alert("Utils code is still loading."); return; }
-                                try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingUtils(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingUtils ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
-                    </div>
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingTest}
-                            onClick={async () => {
-                                if (!testCode) { alert("Test code is still loading."); return; }
-                                try { setIsCopyingTest(true); await copyToClipboardRobust(testCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingTest(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingTest ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">test.py</code></span>
-                    </div>
+
+                    {showHostFiles && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="text-sm text-white/70 leading-relaxed -mt-1">
+                                <button type="button" disabled={isCopyingServer}
+                                    onClick={async () => {
+                                        if (!serverCode) { alert("Server code is still loading."); return; }
+                                        try { setIsCopyingServer(true); await copyToClipboardRobust(serverCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingServer(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingServer ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">server.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingModel}
+                                    onClick={async () => {
+                                        if (!modelCode) { alert("Model code is still loading."); return; }
+                                        try { setIsCopyingModel(true); await copyToClipboardRobust(modelCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingModel(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingModel ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">model.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingUtils}
+                                    onClick={async () => {
+                                        if (!utilsCode) { alert("Utils code is still loading."); return; }
+                                        try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingUtils(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingUtils ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingTest}
+                                    onClick={async () => {
+                                        if (!testCode) { alert("Test code is still loading."); return; }
+                                        try { setIsCopyingTest(true); await copyToClipboardRobust(testCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingTest(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingTest ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">test.py</code></span>
+                            </div>
+                        </div>
+                    )}
                     <div className="text-sm text-white/70 flex items-center gap-2 flex-wrap">
                         <span>run using -</span>
                         <div className="flex items-center gap-2 bg-[#0b1220] px-2 py-1 rounded border border-white/10 group pr-1">
@@ -352,9 +391,74 @@ export default function ComputeRoute() {
                     </div>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    <label className="text-sm text-white/70">
-                        Select Worker
+                <div className="space-y-5 flex flex-col pt-1">
+                    <div className="bg-gradient-to-tr from-[#0b1220] to-[#10172b] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">Download Full Architecture</h3>
+                            <p className="text-xs text-white/50 mt-1">Get the complete cluster scripts as a convenient .zip natively packaged from GitHub.</p>
+                        </div>
+                        <a href="https://github.com/alphastar-avi/computeShare/archive/refs/heads/main.zip"
+                            target="_blank" rel="noopener noreferrer"
+                            className="shrink-0 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 border border-transparent text-white rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .zip
+                        </a>
+                    </div>
+
+                    <div className="pt-2 pb-1 mt-1">
+                        <div className="relative mt-2 mb-3">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowWorkerFiles(!showWorkerFiles)}
+                                    className="bg-[#0b1220] px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-white/50 tracking-wider uppercase hover:text-white hover:border-white/20 transition-all outline-none flex items-center gap-2 shadow-sm"
+                                >
+                                    Or Copy Individual Files
+                                    <svg className={`w-3.5 h-3.5 transition-transform ${showWorkerFiles ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {showWorkerFiles && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="text-sm text-white/70 leading-relaxed mt-2">
+                                <button type="button" disabled={isCopyingWorker}
+                                    onClick={async () => {
+                                        if (!workerCode) { alert("Worker code is still loading."); return; }
+                                        try {
+                                            setIsCopyingWorker(true)
+                                            const finalWorkerCode = workerCode.replace(/SERVER_URL\s*=\s*['"][^'"]*['"]/, `SERVER_URL = "${groupUrl}"`)
+                                            await copyToClipboardRobust(finalWorkerCode)
+                                        } catch (err) { console.error(err) }
+                                        finally { setIsCopyingWorker(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingWorker ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">worker.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed mt-2">
+                                <button type="button" disabled={isCopyingUtils}
+                                    onClick={async () => {
+                                        if (!utilsCode) { alert("Utils code is still loading."); return; }
+                                        try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingUtils(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingUtils ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
+                            </div>
+                        </div>
+                    )}
+
+                    <label className="text-sm text-white/70 mt-2 block w-full">
+                        Select Worker Configuration
                         <div className="relative mt-1 border border-white/10 rounded-lg bg-white/5 overflow-hidden">
                             <select
                                 value={instrSelectedWorker}
@@ -370,35 +474,6 @@ export default function ComputeRoute() {
                             </div>
                         </div>
                     </label>
-                    <div className="text-sm text-white/70 leading-relaxed mt-2">
-                        <button type="button" disabled={isCopyingWorker}
-                            onClick={async () => {
-                                if (!workerCode) { alert("Worker code is still loading."); return; }
-                                try {
-                                    setIsCopyingWorker(true)
-                                    const finalWorkerCode = workerCode.replace(/SERVER_URL\s*=\s*['"][^'"]*['"]/, `SERVER_URL = "${groupUrl}"`)
-                                    await copyToClipboardRobust(finalWorkerCode)
-                                } catch (err) { console.error(err) }
-                                finally { setIsCopyingWorker(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingWorker ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">worker.py</code></span>
-                    </div>
-                    <div className="text-sm text-white/70 leading-relaxed mt-2">
-                        <button type="button" disabled={isCopyingUtils}
-                            onClick={async () => {
-                                if (!utilsCode) { alert("Utils code is still loading."); return; }
-                                try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingUtils(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingUtils ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
-                    </div>
                     <div className="text-sm text-white/70 flex items-center gap-2 flex-wrap">
                         <span>run using -</span>
                         <div className="flex items-center gap-2 bg-[#0b1220] px-2 py-1 rounded border border-white/10 group pr-1">
@@ -415,7 +490,8 @@ export default function ComputeRoute() {
                 </div>
             )}
         </div>
-    )
+        )
+    }
 
     return (
         <ScrollHideProvider>
