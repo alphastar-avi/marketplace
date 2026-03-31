@@ -44,6 +44,7 @@ type MarketplaceContextType = {
     title: string
     pin: string
     url: string
+    dataset: string
     workerSize: number
     epochs: number
     batchSize: number
@@ -209,6 +210,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
     title: string
     pin: string
     url: string
+    dataset: string
     workerSize: number
     epochs: number
     batchSize: number
@@ -219,6 +221,7 @@ export const MarketplaceProvider = ({ children }: { children: ReactNode }) => {
         title: payload.title,
         pin: payload.pin,
         url: payload.url,
+        dataset: payload.dataset,
         worker_size: payload.workerSize,
         epochs: payload.epochs,
         batch_size: payload.batchSize,

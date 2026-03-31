@@ -101,6 +101,7 @@ export type ComputeGroup = {
   id: string
   title: string
   url: string
+  dataset: string
   worker_size: number
   epochs: number
   batch_size: number
