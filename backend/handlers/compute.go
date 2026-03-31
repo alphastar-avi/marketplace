@@ -13,6 +13,7 @@ type createComputeGroupRequest struct {
 	Title      string `json:"title" binding:"required"`
 	PIN        string `json:"pin" binding:"required"`
 	URL        string `json:"url" binding:"required"`
+	Dataset    string `json:"dataset" binding:"required"`
 	WorkerSize int    `json:"worker_size" binding:"required"`
 	Epochs     int    `json:"epochs" binding:"required"`
 	BatchSize  int    `json:"batch_size" binding:"required"`
@@ -81,6 +82,7 @@ func CreateComputeGroup(c *gin.Context) {
 		Title:      req.Title,
 		PIN:        req.PIN,
 		URL:        req.URL,
+		Dataset:    req.Dataset,
 		WorkerSize: req.WorkerSize,
 		Epochs:     req.Epochs,
 		BatchSize:  req.BatchSize,
@@ -123,6 +125,7 @@ func VerifyComputeGroupPIN(c *gin.Context) {
 		"id":          group.ID,
 		"title":       group.Title,
 		"url":         group.URL,
+		"dataset":     group.Dataset,
 		"worker_size": group.WorkerSize,
 		"epochs":      group.Epochs,
 		"batch_size":  group.BatchSize,

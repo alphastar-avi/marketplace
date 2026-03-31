@@ -113,6 +113,7 @@ export const computeAPI = {
     title: string
     pin: string
     url: string
+    dataset: string
     worker_size: number
     epochs: number
     batch_size: number
