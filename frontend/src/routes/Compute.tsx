@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Monitor, Plus, RefreshCw, Loader2, Copy, Lock, Users, ArrowRight, Trash2 } from 'lucide-react'
 import { useMarketplace } from '../state/MarketplaceContext'
 import FloatingBottomNav from '../components/navigation/FloatingBottomNav'
+import { ScrollHideProvider } from '../context/ScrollHideContext'
 import GlassCard from '../components/ui/GlassCard'
 import { ComputeGroup } from '../types'
 
@@ -365,6 +366,7 @@ export default function ComputeRoute() {
     )
 
     return (
+        <ScrollHideProvider>
         <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans pb-32">
             <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-8">
                 <div className="flex items-center justify-between">
@@ -810,5 +812,6 @@ export default function ComputeRoute() {
                 )}
             </AnimatePresence>
         </div>
+        </ScrollHideProvider>
     )
 }

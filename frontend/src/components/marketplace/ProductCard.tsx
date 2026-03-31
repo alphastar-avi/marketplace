@@ -20,7 +20,7 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -6 }}
-      className={`rounded-xl overflow-hidden bg-white/3 p-2.5 cursor-pointer relative shadow-2xl shadow-black/20 ${product.status === 'requested' || product.status === 'sold' ? 'opacity-60' : ''}`}
+      className={`rounded-lg sm:rounded-xl overflow-hidden bg-white/3 cursor-pointer relative shadow-2xl shadow-black/20 ${product.status === 'requested' || product.status === 'sold' ? 'opacity-60' : ''}`}
       style={{ border: '1px solid rgb(50, 56, 68)' }}
       onClick={handleProductClick}
     >
@@ -33,34 +33,41 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
           <Trash2 size={14} />
         </button>
       )}
-      <div className="h-72 rounded-md overflow-hidden mb-3 bg-black/20 grid place-items-center">
+
+      {/* Image: edge-to-edge on both mobile and desktop, top corners match card */}
+      <div className="aspect-[4/5] sm:aspect-auto sm:h-80 overflow-hidden mb-0 bg-black/20 grid place-items-center rounded-t-lg sm:rounded-t-xl">
         {product.images && product.images.length > 0 ? (
           <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover" />
         ) : (
           <div className="text-xs opacity-70">No image</div>
         )}
       </div>
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <div className="font-semibold text-sm mb-1">{product.title}</div>
-          <div className="text-xs opacity-70">{product.category}</div>
-        </div>
-        <div className="text-sm font-bold">₹{product.price}</div>
-      </div>
-      <div className="flex items-center justify-between text-xs opacity-80">
-        <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-white/10 grid place-items-center text-xs font-semibold">
-            {sellerInitial}
+
+      {/* Text content: padded wrapper on mobile, no wrapper needed on desktop (card already padded) */}
+      <div className="px-2.5 pt-2.5 pb-2.5">
+        <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+          <div className="min-w-0 flex-1 mr-2">
+            <div className="font-semibold text-xs sm:text-sm leading-snug mb-0.5 sm:mb-1 truncate">{product.title}</div>
+            <div className="text-[10px] sm:text-xs opacity-60 sm:opacity-70">{product.category}</div>
           </div>
-          <div className="text-sm font-medium">{sellerName}</div>
+          <div className="text-xs sm:text-sm font-bold shrink-0">₹{product.price}</div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleFavoriteClick}
-            className={`p-1 rounded-md transition-colors ${isFavorited ? 'text-red-400' : 'hover:text-red-400'}`}
-          >
-            <Heart size={14} fill={isFavorited ? 'currentColor' : 'none'} />
-          </button>
+        <div className="flex items-center justify-between text-[10px] sm:text-xs opacity-80">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+            <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-white/10 grid place-items-center text-[9px] sm:text-xs font-semibold shrink-0">
+              {sellerInitial}
+            </div>
+            <div className="text-[11px] sm:text-sm font-medium truncate">{sellerName}</div>
+          </div>
+          <div className="flex items-center shrink-0 ml-1">
+            <button
+              onClick={handleFavoriteClick}
+              className={`p-1 rounded-md transition-colors ${isFavorited ? 'text-red-400' : 'hover:text-red-400'}`}
+            >
+              <Heart size={12} className="sm:hidden" fill={isFavorited ? 'currentColor' : 'none'} />
+              <Heart size={14} className="hidden sm:block" fill={isFavorited ? 'currentColor' : 'none'} />
+            </button>
+          </div>
         </div>
       </div>
 
