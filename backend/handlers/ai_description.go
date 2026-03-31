@@ -165,6 +165,7 @@ func saveFilesToTemp(files []*multipart.FileHeader, tempDir string) ([]string, e
 			}
 		}
 		if !allowed {
+			log.Printf("⚠️  Skipping file %s: invalid extension '%s'", file.Filename, ext)
 			continue // Skip invalid files
 		}
 

@@ -63,6 +63,12 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
           continue
         }
 
+        // Validate file size (max 8MB before compression)
+        if (file.size > 8 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 8MB.`)
+          continue
+        }
+
         totalOriginalSize += file.size
 
         try {
@@ -103,8 +109,8 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
         } catch (err) {
           console.error(`Compression failed for ${file.name}:`, err)
           totalCompressedSize += file.size
-          // Fallback to original file if compression fails (and it's within 5MB)
-          if (file.size <= 5 * 1024 * 1024) {
+          // Fallback to original file if compression fails (and it's within 8MB)
+          if (file.size <= 8 * 1024 * 1024) {
             compressedFiles.push(file)
             const reader = new FileReader()
             const dataUrl = await new Promise<string>((resolve) => {
@@ -155,8 +161,10 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       formData.append('category', category)
 
       // Add image files
-      imageFiles.forEach((file) => {
-        formData.append('images', file)
+      imageFiles.forEach((file, index) => {
+        // Explicitly provide filename with extension to help backend validation
+        const fileName = file.name || `image_${index}.jpg`
+        formData.append('images', file, fileName)
       })
 
       const response = await productsAPI.generateDescriptionWithFiles(formData)
@@ -192,8 +200,10 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       }
 
       // Add all image files
-      imageFiles.forEach((file) => {
-        formData.append('images', file)
+      imageFiles.forEach((file, index) => {
+        // Explicitly provide filename with extension
+        const fileName = file.name || `image_${index}.jpg`
+        formData.append('images', file, fileName)
       })
 
       // Log FormData entries for debugging
