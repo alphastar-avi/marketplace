@@ -22,12 +22,16 @@ export default function ComputeRoute() {
     const [isCopyingModel, setIsCopyingModel] = useState(false)
     const [isCopyingWorker, setIsCopyingWorker] = useState(false)
     const [isCopyingReqs, setIsCopyingReqs] = useState(false)
+    const [isCopyingUtils, setIsCopyingUtils] = useState(false)
+    const [isCopyingTest, setIsCopyingTest] = useState(false)
 
     // Pre-fetched script code
     const [serverCode, setServerCode] = useState('')
     const [modelCode, setModelCode] = useState('')
     const [workerCode, setWorkerCode] = useState('')
     const [reqsCode, setReqsCode] = useState('')
+    const [utilsCode, setUtilsCode] = useState('')
+    const [testCode, setTestCode] = useState('')
 
     // Join flow state
     const [groupFilter, setGroupFilter] = useState<'all' | 'mine'>('all')
@@ -81,6 +85,7 @@ export default function ComputeRoute() {
     const [url, setUrl] = useState('')
 
     // Parameter states for step 3
+    const [dataset, setDataset] = useState('MNIST')
     const [workerSize, setWorkerSize] = useState('')
     const [epoch, setEpoch] = useState('')
     const [batchSize, setBatchSize] = useState('')
@@ -97,16 +102,20 @@ export default function ComputeRoute() {
     useEffect(() => {
         const fetchScripts = async () => {
             try {
-                const [serverRes, modelRes, workerRes, reqsRes] = await Promise.all([
+                const [serverRes, modelRes, workerRes, reqsRes, utilsRes, testRes] = await Promise.all([
                     fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/server.py'),
                     fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/model.py'),
                     fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/worker.py'),
-                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/requirements.txt')
+                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/requirements.txt'),
+                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/utils.py'),
+                    fetch('https://raw.githubusercontent.com/alphastar-avi/computeShare/Prod/codeFetch/test.py')
                 ])
                 if (serverRes.ok) setServerCode(await serverRes.text())
                 if (modelRes.ok) setModelCode(await modelRes.text())
                 if (workerRes.ok) setWorkerCode(await workerRes.text())
                 if (reqsRes.ok) setReqsCode(await reqsRes.text())
+                if (utilsRes.ok) setUtilsCode(await utilsRes.text())
+                if (testRes.ok) setTestCode(await testRes.text())
             } catch (err) {
                 console.error("Failed to pre-fetch scripts:", err)
             }
@@ -143,6 +152,7 @@ export default function ComputeRoute() {
                 title,
                 pin,
                 url,
+                dataset,
                 workerSize: parseInt(workerSize) || 1,
                 epochs: parseInt(epoch) || 10,
                 batchSize: parseInt(batchSize) || 32,
@@ -153,6 +163,7 @@ export default function ComputeRoute() {
             setTitle('')
             setPin('')
             setUrl('')
+            setDataset('MNIST')
             setWorkerSize('')
             setEpoch('')
             setBatchSize('')
@@ -208,22 +219,28 @@ export default function ComputeRoute() {
         }
     }
 
-    const snippet = 'npx -y localtunnel --port 8000'
+    const snippet = 'npx cloudflared tunnel --url http://localhost:8000'
 
     // Instruction panel shared between wizard creation and join flow
     const InstructionPanel = ({
         groupUrl,
         groupPin,
+        groupDataset,
         groupWorkerSize,
         groupEpoch,
         groupBatchSize,
     }: {
         groupUrl: string
         groupPin: string
+        groupDataset: string
         groupWorkerSize: string
         groupEpoch: string
         groupBatchSize: string
-    }) => (
+    }) => {
+        const [showHostFiles, setShowHostFiles] = useState(false)
+        const [showWorkerFiles, setShowWorkerFiles] = useState(false)
+        
+        return (
         <div className="grid gap-4">
             <div className="text-sm text-white/70 leading-relaxed">
                 <button
@@ -271,41 +288,102 @@ export default function ComputeRoute() {
             </div>
 
             {instrActiveTab === 'host' ? (
-                <div className="space-y-4">
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingServer}
-                            onClick={async () => {
-                                if (!serverCode) { alert("Server code is still loading."); return; }
-                                try { setIsCopyingServer(true); await copyToClipboardRobust(serverCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingServer(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingServer ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">server.py</code></span>
+                <div className="space-y-5 flex flex-col pt-1">
+                    <div className="bg-gradient-to-tr from-[#0b1220] to-[#10172b] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">Download Full Architecture</h3>
+                            <p className="text-xs text-white/50 mt-1">Get the complete cluster scripts as a convenient .zip natively packaged from GitHub.</p>
+                        </div>
+                        <a href="https://github.com/alphastar-avi/computeShare/archive/refs/heads/main.zip"
+                            target="_blank" rel="noopener noreferrer"
+                            className="shrink-0 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 border border-transparent text-white rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .zip
+                        </a>
                     </div>
-                    <div className="text-sm text-white/70 leading-relaxed">
-                        <button type="button" disabled={isCopyingModel}
-                            onClick={async () => {
-                                if (!modelCode) { alert("Model code is still loading."); return; }
-                                try { setIsCopyingModel(true); await copyToClipboardRobust(modelCode) }
-                                catch (err) { console.error(err) }
-                                finally { setIsCopyingModel(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingModel ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">model.py</code></span>
+                    
+                    <div className="pt-2 pb-1 mt-1">
+                        <div className="relative mt-2 mb-3">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowHostFiles(!showHostFiles)}
+                                    className="bg-[#0b1220] px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-white/50 tracking-wider uppercase hover:text-white hover:border-white/20 transition-all outline-none flex items-center gap-2 shadow-sm"
+                                >
+                                    Or Copy Individual Files
+                                    <svg className={`w-3.5 h-3.5 transition-transform ${showHostFiles ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
+
+                    {showHostFiles && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="text-sm text-white/70 leading-relaxed -mt-1">
+                                <button type="button" disabled={isCopyingServer}
+                                    onClick={async () => {
+                                        if (!serverCode) { alert("Server code is still loading."); return; }
+                                        try { setIsCopyingServer(true); await copyToClipboardRobust(serverCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingServer(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingServer ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">server.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingModel}
+                                    onClick={async () => {
+                                        if (!modelCode) { alert("Model code is still loading."); return; }
+                                        try { setIsCopyingModel(true); await copyToClipboardRobust(modelCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingModel(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingModel ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">model.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingUtils}
+                                    onClick={async () => {
+                                        if (!utilsCode) { alert("Utils code is still loading."); return; }
+                                        try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingUtils(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingUtils ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed">
+                                <button type="button" disabled={isCopyingTest}
+                                    onClick={async () => {
+                                        if (!testCode) { alert("Test code is still loading."); return; }
+                                        try { setIsCopyingTest(true); await copyToClipboardRobust(testCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingTest(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingTest ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">test.py</code></span>
+                            </div>
+                        </div>
+                    )}
                     <div className="text-sm text-white/70 flex items-center gap-2 flex-wrap">
                         <span>run using -</span>
                         <div className="flex items-center gap-2 bg-[#0b1220] px-2 py-1 rounded border border-white/10 group pr-1">
                             <code className="text-indigo-400">
-                                python server.py --pinSizEpo {groupPin || '<PIN>'} {groupWorkerSize || '<worker size>'} {groupEpoch || '<epochs>'}
+                                python server.py --dataset {groupDataset || 'MNIST'} --pinSizEpo {groupPin || '<PIN>'} {groupWorkerSize || '<worker size>'} {groupEpoch || '<epochs>'}
                             </code>
                             <button type="button"
-                                onClick={() => navigator.clipboard.writeText(`python server.py --pinSizEpo ${groupPin} ${groupWorkerSize} ${groupEpoch}`)}
+                                onClick={() => navigator.clipboard.writeText(`python server.py --dataset ${groupDataset} --pinSizEpo ${groupPin} ${groupWorkerSize} ${groupEpoch}`)}
                                 className="p-1 rounded bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors opacity-0 group-hover:opacity-100 shrink-0">
                                 <Copy size={14} />
                             </button>
@@ -313,9 +391,74 @@ export default function ComputeRoute() {
                     </div>
                 </div>
             ) : (
-                <div className="space-y-4">
-                    <label className="text-sm text-white/70">
-                        Select Worker
+                <div className="space-y-5 flex flex-col pt-1">
+                    <div className="bg-gradient-to-tr from-[#0b1220] to-[#10172b] border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">Download Full Architecture</h3>
+                            <p className="text-xs text-white/50 mt-1">Get the complete cluster scripts as a convenient .zip natively packaged from GitHub.</p>
+                        </div>
+                        <a href="https://github.com/alphastar-avi/computeShare/archive/refs/heads/main.zip"
+                            target="_blank" rel="noopener noreferrer"
+                            className="shrink-0 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 border border-transparent text-white rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download .zip
+                        </a>
+                    </div>
+
+                    <div className="pt-2 pb-1 mt-1">
+                        <div className="relative mt-2 mb-3">
+                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div className="w-full border-t border-white/10"></div>
+                            </div>
+                            <div className="relative flex justify-center">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowWorkerFiles(!showWorkerFiles)}
+                                    className="bg-[#0b1220] px-4 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-white/50 tracking-wider uppercase hover:text-white hover:border-white/20 transition-all outline-none flex items-center gap-2 shadow-sm"
+                                >
+                                    Or Copy Individual Files
+                                    <svg className={`w-3.5 h-3.5 transition-transform ${showWorkerFiles ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {showWorkerFiles && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="text-sm text-white/70 leading-relaxed mt-2">
+                                <button type="button" disabled={isCopyingWorker}
+                                    onClick={async () => {
+                                        if (!workerCode) { alert("Worker code is still loading."); return; }
+                                        try {
+                                            setIsCopyingWorker(true)
+                                            const finalWorkerCode = workerCode.replace(/SERVER_URL\s*=\s*['"][^'"]*['"]/, `SERVER_URL = "${groupUrl}"`)
+                                            await copyToClipboardRobust(finalWorkerCode)
+                                        } catch (err) { console.error(err) }
+                                        finally { setIsCopyingWorker(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingWorker ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">worker.py</code></span>
+                            </div>
+                            <div className="text-sm text-white/70 leading-relaxed mt-2">
+                                <button type="button" disabled={isCopyingUtils}
+                                    onClick={async () => {
+                                        if (!utilsCode) { alert("Utils code is still loading."); return; }
+                                        try { setIsCopyingUtils(true); await copyToClipboardRobust(utilsCode) }
+                                        catch (err) { console.error(err) }
+                                        finally { setIsCopyingUtils(false) }
+                                    }}
+                                    className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
+                                    {isCopyingUtils ? 'Copying...' : 'Click here'}
+                                </button>
+                                <span>to copy this code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">utils.py</code></span>
+                            </div>
+                        </div>
+                    )}
+
+                    <label className="text-sm text-white/70 mt-2 block w-full">
+                        Select Worker Configuration
                         <div className="relative mt-1 border border-white/10 rounded-lg bg-white/5 overflow-hidden">
                             <select
                                 value={instrSelectedWorker}
@@ -331,30 +474,14 @@ export default function ComputeRoute() {
                             </div>
                         </div>
                     </label>
-                    <div className="text-sm text-white/70 leading-relaxed mt-2">
-                        <button type="button" disabled={isCopyingWorker}
-                            onClick={async () => {
-                                if (!workerCode) { alert("Worker code is still loading."); return; }
-                                try {
-                                    setIsCopyingWorker(true)
-                                    const finalWorkerCode = workerCode.replace(/SERVER_URL\s*=\s*['"][^'"]*['"]/, `SERVER_URL = "${groupUrl}"`)
-                                    await copyToClipboardRobust(finalWorkerCode)
-                                } catch (err) { console.error(err) }
-                                finally { setIsCopyingWorker(false) }
-                            }}
-                            className="text-blue-400 hover:text-blue-300 transition-colors font-medium outline-none pr-1 disabled:opacity-50">
-                            {isCopyingWorker ? 'Copying...' : 'Click here'}
-                        </button>
-                        <span>to copy the code and save it as <code className="text-white/90 bg-white/5 px-1.5 py-0.5 rounded ml-0.5">worker.py</code></span>
-                    </div>
                     <div className="text-sm text-white/70 flex items-center gap-2 flex-wrap">
                         <span>run using -</span>
                         <div className="flex items-center gap-2 bg-[#0b1220] px-2 py-1 rounded border border-white/10 group pr-1">
                             <code className="text-cyan-400">
-                                python worker.py --pinSizRanBatEpo {groupPin || '<PIN>'} {groupWorkerSize || '<workers>'} {instrSelectedWorker} {groupBatchSize || '<BATCH>'} {groupEpoch || '<epochs>'}
+                                python worker.py --dataset {groupDataset || 'MNIST'} --pinSizRanBatEpo {groupPin || '<PIN>'} {groupWorkerSize || '<workers>'} {instrSelectedWorker} {groupBatchSize || '<BATCH>'} {groupEpoch || '<epochs>'}
                             </code>
                             <button type="button"
-                                onClick={() => navigator.clipboard.writeText(`python worker.py --pinSizRanBatEpo ${groupPin} ${groupWorkerSize} ${instrSelectedWorker} ${groupBatchSize} ${groupEpoch}`)}
+                                onClick={() => navigator.clipboard.writeText(`python worker.py --dataset ${groupDataset} --pinSizRanBatEpo ${groupPin} ${groupWorkerSize} ${instrSelectedWorker} ${groupBatchSize} ${groupEpoch}`)}
                                 className="p-1 rounded bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors opacity-0 group-hover:opacity-100 shrink-0">
                                 <Copy size={14} />
                             </button>
@@ -363,7 +490,8 @@ export default function ComputeRoute() {
                 </div>
             )}
         </div>
-    )
+        )
+    }
 
     return (
         <ScrollHideProvider>
@@ -594,6 +722,7 @@ export default function ComputeRoute() {
                             <InstructionPanel
                                 groupUrl={instructionGroup.url}
                                 groupPin={''}
+                                groupDataset={instructionGroup.dataset || 'MNIST'}
                                 groupWorkerSize={String(instructionGroup.worker_size)}
                                 groupEpoch={String(instructionGroup.epochs)}
                                 groupBatchSize={String(instructionGroup.batch_size)}
@@ -715,7 +844,12 @@ export default function ComputeRoute() {
                                             required
                                         />
                                     </label>
-                                    <p className="text-xs text-white/40">Paste the URL generated by the tunneling service.</p>
+                                    <p className="text-xs text-white/40">
+                                        Paste the URL generated by the tunneling service. <br/>
+                                        <span className="opacity-70 mt-1 block">
+                                            (Alternatively, if all Macs are on the exact same Wi-Fi/Shared Network, simply use the server's Local IP Address <code className="bg-white/10 px-1 rounded">http://192.168.x.x:8000</code> natively without any tunnels for zero-latency setups!)
+                                        </span>
+                                    </p>
 
                                     <div className="flex gap-3 mt-4">
                                         <button
@@ -741,6 +875,36 @@ export default function ComputeRoute() {
                             ) : wizardStep === 3 ? (
                                 <form onSubmit={(e) => { e.preventDefault(); if (workerSize.trim() && epoch.trim() && batchSize.trim()) setWizardStep(4); }} className="grid gap-4">
                                     <p className="text-sm text-white/70">Configure your cluster hyperparameters for the network.</p>
+
+                                    <label className="text-sm text-white/70">
+                                        Dataset
+                                        <div className="relative mt-1 border border-white/10 rounded-lg bg-white/5 overflow-hidden">
+                                            <select
+                                                value={dataset}
+                                                onChange={(e) => setDataset(e.target.value)}
+                                                className="w-full bg-transparent px-3 py-2 outline-none appearance-none text-white focus:border-white/30 transition"
+                                            >
+                                                <optgroup label="High Performance Tier" className="bg-[#0b1220] text-emerald-400">
+                                                    {['MNIST', 'FashionMNIST', 'KMNIST', 'QMNIST', 'EMNIST', 'USPS'].map((ds) => (
+                                                        <option key={ds} value={ds} className="text-white">{ds}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="Medium Performance Tier" className="bg-[#0b1220] text-yellow-400">
+                                                    {['CIFAR10', 'SVHN', 'STL10'].map((ds) => (
+                                                        <option key={ds} value={ds} className="text-white">{ds}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="Low Performance Tier" className="bg-[#0b1220] text-red-400">
+                                                    {['CIFAR100', 'StanfordCars', 'PCAM', 'EuroSAT', 'Flowers102', 'OxfordIIITPet', 'Places365', 'Food101', 'GTSRB', 'DTD', 'FGVCAircraft', 'Country211', 'Caltech101', 'Caltech256'].map((ds) => (
+                                                        <option key={ds} value={ds} className="text-white">{ds}</option>
+                                                    ))}
+                                                </optgroup>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/50">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
+                                    </label>
 
                                     <label className="text-sm text-white/70">
                                         Worker Size
@@ -780,6 +944,7 @@ export default function ComputeRoute() {
                                     <InstructionPanel
                                         groupUrl={url}
                                         groupPin={pin}
+                                        groupDataset={dataset}
                                         groupWorkerSize={workerSize}
                                         groupEpoch={epoch}
                                         groupBatchSize={batchSize}

@@ -149,6 +149,7 @@ type ComputeGroup struct {
 	Title      string    `json:"title" gorm:"unique;not null"`
 	PIN        string    `json:"-" gorm:"not null"` // Hidden from public responses
 	URL        string    `json:"url" gorm:"not null"`
+	Dataset    string    `json:"dataset" gorm:"not null;default:'MNIST'"`
 	WorkerSize int       `json:"worker_size" gorm:"not null;default:1"`
 	Epochs     int       `json:"epochs" gorm:"not null;default:10"`
 	BatchSize  int       `json:"batch_size" gorm:"not null;default:32"`
