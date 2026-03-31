@@ -153,6 +153,7 @@ func saveFilesToTemp(files []*multipart.FileHeader, tempDir string) ([]string, e
 	var tempFilePaths []string
 
 	for i, file := range files {
+		log.Printf("🤖 Received image for AI analysis: %s (%d bytes)", file.Filename, file.Size)
 		// Validate file type
 		ext := strings.ToLower(filepath.Ext(file.Filename))
 		allowedExts := []string{".jpg", ".jpeg", ".png", ".webp", ".gif"}

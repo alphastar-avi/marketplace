@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { ArrowLeft, X, Sparkles } from 'lucide-react'
+import imageCompression from 'browser-image-compression'
 import { useMarketplace } from '../../state/MarketplaceContext'
 import { productsAPI } from '../../api/services'
 import GlassCard from '../ui/GlassCard'
@@ -19,6 +20,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [compressing, setCompressing] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -29,7 +31,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
     }, 3000)
   }
 
-  const onDrop = (files: FileList | null) => {
+  const onDrop = async (files: FileList | null) => {
     if (!files) return
 
     // Calculate how many more files we can add (max 6 total)
@@ -39,35 +41,93 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       return
     }
 
-    const newImages: string[] = []
-    const newFiles: File[] = []
+    setCompressing(true)
 
-    // Only process up to the remaining slots
-    Array.from(files).slice(0, remainingSlots).forEach((file) => {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert(`File ${file.name} is not an image`)
-        return
+    try {
+      const filesToProcess = Array.from(files).slice(0, remainingSlots)
+      const compressedFiles: File[] = []
+      const compressedDataUrls: string[] = []
+      let totalOriginalSize = 0
+      let totalCompressedSize = 0
+
+      const compressionOptions = {
+        maxSizeMB: 1, // Max size 1MB
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
       }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`File ${file.name} is too large. Maximum size is 5MB.`)
-        return
-      }
+      for (const file of filesToProcess) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert(`File ${file.name} is not an image`)
+          continue
+        }
 
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        newImages.push(e.target?.result as string)
-        if (newImages.length === Math.min(files.length, remainingSlots)) {
-          setImages((s) => [...s, ...newImages])
+        totalOriginalSize += file.size
+
+        try {
+          // Compress image
+          const compressedFile = await imageCompression(file, compressionOptions)
+          
+          // ONLY use compressed version if it's actually smaller
+          if (compressedFile.size < file.size) {
+            totalCompressedSize += compressedFile.size
+            const reduction = ((file.size - compressedFile.size) / file.size * 100).toFixed(1)
+            console.log(`📸 Image Optimized: ${file.name}`)
+            console.log(`   Original: ${(file.size / 1024 / 1024).toFixed(2)} MB`)
+            console.log(`   Compressed: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`)
+            console.log(`   Reduction: ${reduction}%`)
+            
+            compressedFiles.push(compressedFile)
+
+            // Get Data URL for preview
+            const reader = new FileReader()
+            const dataUrl = await new Promise<string>((resolve) => {
+              reader.onload = (e) => resolve(e.target?.result as string)
+              reader.readAsDataURL(compressedFile)
+            })
+            compressedDataUrls.push(dataUrl)
+          } else {
+            // Keep original if compressed is larger or equal
+            console.log(`💡 No optimization needed for ${file.name} (original is smaller/better)`)
+            totalCompressedSize += file.size
+            compressedFiles.push(file)
+            
+            const reader = new FileReader()
+            const dataUrl = await new Promise<string>((resolve) => {
+              reader.onload = (e) => resolve(e.target?.result as string)
+              reader.readAsDataURL(file)
+            })
+            compressedDataUrls.push(dataUrl)
+          }
+        } catch (err) {
+          console.error(`Compression failed for ${file.name}:`, err)
+          totalCompressedSize += file.size
+          // Fallback to original file if compression fails (and it's within 5MB)
+          if (file.size <= 5 * 1024 * 1024) {
+            compressedFiles.push(file)
+            const reader = new FileReader()
+            const dataUrl = await new Promise<string>((resolve) => {
+              reader.onload = (e) => resolve(e.target?.result as string)
+              reader.readAsDataURL(file)
+            })
+            compressedDataUrls.push(dataUrl)
+          } else {
+            alert(`File ${file.name} is too large and compression failed.`)
+          }
         }
       }
-      reader.readAsDataURL(file)
-      newFiles.push(file)
-    })
 
-    setImageFiles((s) => [...s, ...newFiles])
+      setImages((s) => [...s, ...compressedDataUrls])
+      setImageFiles((s) => [...s, ...compressedFiles])
+      
+      const totalReductionMB = ((totalOriginalSize - totalCompressedSize) / 1024 / 1024).toFixed(2)
+      if (Number(totalReductionMB) > 0) {
+        showToast(`Optimized ${filesToProcess.length} images. Saved ${totalReductionMB} MB!`)
+      }
+    } finally {
+      setCompressing(false)
+    }
   }
 
   const removeImg = (i: number) => {
@@ -201,7 +261,15 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input ref={fileInputRef} type="file" multiple accept="image/*" onChange={(e) => onDrop(e.target.files)} className="hidden" />
-                  <div className="text-sm opacity-70">Drag & drop or click to upload (max 6)</div>
+                  <div className="text-sm opacity-70">
+                    {compressing ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Spinner className="w-4 h-4" /> Optimizing images...
+                      </span>
+                    ) : (
+                      'Drag & drop or click to upload (max 6)'
+                    )}
+                  </div>
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {images.map((img, i) => (
                       <div key={i} className="relative">
@@ -369,7 +437,7 @@ export default function ListItemPage({ onDone }: { onDone: () => void }) {
       {/* Ephemeral Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-red-500/90 backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-lg border border-red-400/30 flex items-center gap-2">
+          <div className="bg-blue-500/90 backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-lg border border-blue-400/30 flex items-center gap-2">
             <span className="text-sm font-medium">{toastMessage}</span>
           </div>
         </div>
