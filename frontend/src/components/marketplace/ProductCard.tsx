@@ -20,7 +20,7 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
   return (
     <motion.div
       whileHover={{ scale: 1.02, y: -6 }}
-      className={`rounded-lg sm:rounded-xl overflow-hidden bg-white/3 cursor-pointer relative shadow-2xl shadow-black/20 sm:p-2.5 ${product.status === 'requested' || product.status === 'sold' ? 'opacity-60' : ''}`}
+      className={`rounded-lg sm:rounded-xl overflow-hidden bg-white/3 cursor-pointer relative shadow-2xl shadow-black/20 ${product.status === 'requested' || product.status === 'sold' ? 'opacity-60' : ''}`}
       style={{ border: '1px solid rgb(50, 56, 68)' }}
       onClick={handleProductClick}
     >
@@ -34,8 +34,8 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
         </button>
       )}
 
-      {/* Image: edge-to-edge + aspect-[4/5] on mobile; padded h-72 + rounded-md on desktop */}
-      <div className="aspect-[4/5] sm:aspect-auto sm:h-72 sm:rounded-md overflow-hidden mb-0 sm:mb-3 bg-black/20 grid place-items-center">
+      {/* Image: edge-to-edge on both mobile and desktop, top corners match card */}
+      <div className="aspect-[4/5] sm:aspect-auto sm:h-80 overflow-hidden mb-0 bg-black/20 grid place-items-center rounded-t-lg sm:rounded-t-xl">
         {product.images && product.images.length > 0 ? (
           <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover" />
         ) : (
@@ -44,7 +44,7 @@ export default function ProductCard({ product, isFavorited, onToggleFavorite, is
       </div>
 
       {/* Text content: padded wrapper on mobile, no wrapper needed on desktop (card already padded) */}
-      <div className="px-2.5 pt-2.5 pb-2.5 sm:px-0 sm:pt-0 sm:pb-0">
+      <div className="px-2.5 pt-2.5 pb-2.5">
         <div className="flex items-center justify-between mb-1.5 sm:mb-2">
           <div className="min-w-0 flex-1 mr-2">
             <div className="font-semibold text-xs sm:text-sm leading-snug mb-0.5 sm:mb-1 truncate">{product.title}</div>
