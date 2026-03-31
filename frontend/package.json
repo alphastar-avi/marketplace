@@ -12,7 +12,10 @@
   "dependencies": {
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
+    "@types/canvas-confetti": "^1.9.0",
     "axios": "^1.11.0",
+    "browser-image-compression": "^2.0.2",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.541.0",
     "postprocessing": "^6.38.2",

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"marketplace-backend/config"
 	"marketplace-backend/models"
 	"marketplace-backend/storage"
@@ -143,6 +144,7 @@ func CreateProduct(c *gin.Context) {
 
 		// Upload each file
 		for _, file := range files {
+			log.Printf("📥 Received image for upload: %s (%d bytes)", file.Filename, file.Size)
 			fileURL, err := blobStorage.UploadFile(file, "products")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
