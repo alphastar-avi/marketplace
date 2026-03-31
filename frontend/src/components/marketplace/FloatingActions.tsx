@@ -8,8 +8,8 @@ export default function FloatingActions() {
 
   return (
     <div
-      className={`fixed bottom-20 sm:bottom-6 right-6 flex flex-col gap-3 sm:gap-4 z-50 transition-transform duration-300 ${
-        hidden ? 'translate-y-14' : 'translate-y-0'
+      className={`fixed bottom-24 sm:bottom-10 right-6 flex flex-col gap-3 sm:gap-4 z-50 transition-transform duration-300 ${
+        hidden ? 'translate-y-20' : 'translate-y-0'
       }`}
     >
       <button
