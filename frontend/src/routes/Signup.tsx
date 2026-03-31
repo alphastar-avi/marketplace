@@ -114,21 +114,25 @@ export default function Signup() {
           <h1 className="text-5xl font-black leading-tight text-white sm:text-6xl lg:text-7xl">
             College Marketplace
           </h1>
-          <p className="text-lg text-white/70 sm:text-xl">
-            Buy and sell within your college community. Showcase listings, chat instantly, and discover campus deals—all in one modern interface.
+          <p className="text-lg text-white/70 sm:text-xl shrink-0 pt-2">
+            Buy and sell within your college community. Showcase listings, chat instantly, and share compute.
           </p>
-          <ul className="space-y-3 text-sm text-white/60">
+          <ul className="space-y-4 text-sm text-white/60 mt-4">
             <li className="flex items-start gap-3">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
-              Curated feed tuned for college trends and micro-communities.
+              <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-indigo-500" />
+              <span className="leading-relaxed"><strong>Peer-to-Peer Marketplace</strong> - Buy, sell, and showcase physical listings with seamless built-in chat.</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
-              Built-in chat so buyers and sellers can coordinate instantly.
+              <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span className="leading-relaxed"><strong>ComputeShare</strong> - lightweight shared distributed federated machine learning model training system.</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/60" />
-              Trusted verification to keep every interaction safe.
+              <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-purple-500" />
+              <span className="leading-relaxed"><strong>Campus Carpool</strong> - Ride together, split gas, and travel safely with verified peers.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 shrink-0 h-1.5 w-1.5 rounded-full bg-blue-500" />
+              <span className="leading-relaxed"><strong>Trusted Student Verification</strong> - Safe, curated interactions engineered for your specific micro-community.</span>
             </li>
           </ul>
         </div>
