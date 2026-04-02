@@ -100,6 +100,7 @@ func UpdateUser(c *gin.Context) {
 		updateData.Name = c.PostForm("name")
 		updateData.Year = c.PostForm("year")
 		updateData.Department = c.PostForm("department")
+		updateData.UPIID = c.PostForm("upi_id")
 
 		// Handle file upload
 		file, header, err := c.Request.FormFile("avatar")
@@ -138,6 +139,9 @@ func UpdateUser(c *gin.Context) {
 	}
 	if updateData.Department != "" {
 		updates["department"] = updateData.Department
+	}
+	if updateData.UPIID != "" {
+		updates["upi_id"] = updateData.UPIID
 	}
 	if updateData.Avatar != "" {
 		updates["avatar"] = updateData.Avatar

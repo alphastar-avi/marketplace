@@ -77,7 +77,7 @@ func Register(c *gin.Context) {
 	}
 
 	// Verify email domain matches the selected college's domain
-	if strings.ToLower(domain) != strings.ToLower(college.Domain) {
+	if !strings.EqualFold(domain, college.Domain) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Email doesn't belong to " + college.Name})
 		return
 	}

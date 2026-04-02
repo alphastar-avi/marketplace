@@ -16,6 +16,7 @@ export type Product = {
     email: string
     year: string
     department: string
+    upiId?: string
     avatar: string
   }
   isArchived?: boolean
@@ -35,6 +36,7 @@ export type UserType = {
   avatar?: string
   year?: string
   department?: string
+  upiId?: string
   isAdmin?: boolean
 }
 
