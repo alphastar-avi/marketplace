@@ -36,6 +36,7 @@ func sellerDTOFromUser(user *models.User) *SellerDTO {
 		Email:      user.Email,
 		Year:       user.Year,
 		Department: user.Department,
+		UPIID:      user.UPIID,
 		Avatar:     user.Avatar,
 	}
 }
@@ -96,6 +97,7 @@ type SellerDTO struct {
 	Email      string `json:"email"`
 	Year       string `json:"year"`
 	Department string `json:"department"`
+	UPIID      string `json:"upiId"`
 	Avatar     string `json:"avatar"`
 }
 
@@ -197,6 +199,7 @@ func ProductDTOFromModel(product *models.Product) *ProductDTO {
 			Email:      product.Seller.Email,
 			Year:       product.Seller.Year,
 			Department: product.Seller.Department,
+			UPIID:      product.Seller.UPIID,
 			Avatar:     product.Seller.Avatar,
 		}
 	}

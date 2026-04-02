@@ -14,6 +14,7 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
   const [name, setName] = useState(user?.name || '')
   const [year, setYear] = useState(user?.year || '')
   const [dept, setDept] = useState(user?.department || '')
+  const [upiId, setUpiId] = useState(user?.upiId || '')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -22,6 +23,7 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
     setName(user?.name || '')
     setYear(user?.year || '')
     setDept(user?.department || '')
+    setUpiId(user?.upiId || '')
   }, [user])
 
   const myListings = products.filter((p: Product) => p.sellerId === user?.id && !p.isArchived)
@@ -43,6 +45,7 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
     formData.append('name', name)
     formData.append('year', year)
     formData.append('department', dept)
+    formData.append('upi_id', upiId)
     if (avatarFile) {
       formData.append('avatar', avatarFile)
     }
@@ -116,11 +119,14 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
 
                 {/* Year & Department — view or edit */}
                 {!editing ? (
-                  <div className="text-xs opacity-60 text-center">
+                  <div className="text-xs opacity-60 text-center flex flex-col gap-1 mt-1">
+                    <div>
                     {user?.year || user?.department
                       ? [user?.year, user?.department].filter(Boolean).join(' • ')
                       : <span className="italic opacity-50">No year or department set</span>
                     }
+                    </div>
+                    {user?.upiId && <div className="text-[10px] text-cyan-400">UPI: {user.upiId}</div>}
                   </div>
                 ) : (
                   <div className="w-full flex flex-col gap-2 mt-1">
@@ -142,13 +148,24 @@ export default function Profile({ onOpenChat, onBack, onViewProduct }: { onOpenC
                       placeholder="Department (e.g. CSE)"
                       className="p-2 bg-transparent border border-white/10 rounded-md w-full text-center text-sm focus:outline-none focus:border-white/30"
                     />
+                    <input
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      placeholder="UPI ID (e.g. user@okicici)"
+                      className="p-2 bg-transparent border border-cyan-500/30 text-cyan-400 rounded-md w-full text-center text-sm focus:outline-none focus:border-cyan-500"
+                    />
                   </div>
                 )}
 
                 {editing ? (
                   <div className="mt-3 flex gap-2">
-                    <button onClick={handleSave} className="py-2 px-3 rounded-md bg-gradient-to-r from-indigo-500 to-cyan-400">Save</button>
-                    <button onClick={() => { setEditing(false); setAvatarPreview(null); setAvatarFile(null); setName(user?.name || ''); setYear(user?.year || ''); setDept(user?.department || ''); }} className="py-2 px-3 rounded-md bg-white/6">Cancel</button>
+                    <button
+                      onClick={handleSave}
+                      className="py-2 px-6 rounded-xl bg-gradient-to-br from-[#a7b7ff] via-[#8aa5ff] to-[#6a7dff] hover:from-[#96a9ff] hover:via-[#7b98ff] hover:to-[#5a6eff] text-slate-950 font-bold shadow-[0_12px_28px_rgba(5,8,20,0.4)] transition-all duration-200"
+                    >
+                      Save
+                    </button>
+                    <button onClick={() => { setEditing(false); setAvatarPreview(null); setAvatarFile(null); setName(user?.name || ''); setYear(user?.year || ''); setDept(user?.department || ''); setUpiId(user?.upiId || ''); }} className="py-2 px-3 rounded-md bg-white/6">Cancel</button>
                   </div>
                 ) : (
                   <div className="mt-3 space-y-2">

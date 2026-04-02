@@ -1,15 +1,58 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Monitor, Plus, RefreshCw, Loader2, Copy, Lock, Users, ArrowRight, Trash2 } from 'lucide-react'
+import { Monitor, Plus, RefreshCw, Loader2, Copy, Lock, Users, ArrowRight, Trash2, User, PlusCircle } from 'lucide-react'
 import { useMarketplace } from '../state/MarketplaceContext'
 import FloatingBottomNav from '../components/navigation/FloatingBottomNav'
-import { ScrollHideProvider } from '../context/ScrollHideContext'
+import { ScrollHideProvider, useScrollHidden } from '../context/ScrollHideContext'
+import { useNavigate } from 'react-router-dom'
 import GlassCard from '../components/ui/GlassCard'
 import { ComputeGroup } from '../types'
 import confetti from 'canvas-confetti'
 
+function ComputeFloatingActions({ onAdd }: { onAdd: () => void }) {
+    const hidden = useScrollHidden()
+    
+    return (
+        <div
+            className={`fixed bottom-24 sm:bottom-10 right-6 flex flex-col gap-4 z-30 transition-transform duration-300 ${
+                hidden ? 'translate-y-20' : 'translate-y-0'
+            }`}
+        >
+            <button
+                onClick={onAdd}
+                className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-gradient-to-br from-[#a7b7ff] via-[#8aa5ff] to-[#6a7dff] text-slate-950 flex items-center justify-center border border-white/20 shadow-[0_12px_28px_rgba(5,8,20,0.4)]"
+            >
+                <PlusCircle size={24} strokeWidth={2.2} className="sm:hidden" />
+                <PlusCircle size={30} strokeWidth={2.2} className="hidden sm:block" />
+            </button>
+        </div>
+    )
+}
+
+
 export default function ComputeRoute() {
+    const navigate = useNavigate()
     const { computeGroups, refreshComputeGroups, createComputeGroup, checkComputeTitleUnique, verifyComputeGroupPIN, deleteComputeGroup, user } = useMarketplace()
+    
+    // Sticky header scroll-hide — mirrors Carpool.tsx
+    const headerRef = useRef<HTMLDivElement>(null)
+    const [headerVisible, setHeaderVisible] = useState(true)
+    const [lastScrollY, setLastScrollY] = useState(0)
+
+    useEffect(() => {
+        const onScroll = () => {
+            const y = window.scrollY
+            if (y < lastScrollY || y < 50) setHeaderVisible(true)
+            else if (y > lastScrollY && y > 50) setHeaderVisible(false)
+            setLastScrollY(y)
+            if (headerRef.current) {
+                headerRef.current.style.backdropFilter = `blur(${Math.min(12, y / 30)}px)`
+            }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true })
+        return () => window.removeEventListener('scroll', onScroll)
+    }, [lastScrollY])
+
     const [showWizard, setShowWizard] = useState(false)
     const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1)
 
@@ -505,44 +548,66 @@ export default function ComputeRoute() {
 
     return (
         <ScrollHideProvider>
-        <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#0b1220] to-[#061028] text-white font-sans pb-32">
-            <div className="max-w-5xl mx-auto px-4 md:px-8 py-10 space-y-8">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm uppercase tracking-[0.4em] text-white/50">Infrastructure</p>
-                        <h1 className="text-3xl font-bold mt-2">ComputeShare</h1>
-                        <p className="text-sm text-white/70 mt-1">Tap into shared computing power and deploy clusters globally.</p>
+        <div className="min-h-screen text-white font-sans pb-32">
+            
+            {/* ─── Sticky Header (mirrors Carpool header style) ─── */}
+            <div
+                ref={headerRef}
+                className={`sticky top-0 z-40 bg-white/3 backdrop-blur-md transition-transform duration-300 ease-in-out ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}
+                style={{ borderBottom: '1px solid rgb(134, 139, 156)' }}
+            >
+                <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+                    {/* Brand */}
+                    <div className="min-w-0">
+                        <div className="text-base md:text-xl font-bold whitespace-nowrap truncate">ComputeShare</div>
+                        <p className="text-[10px] md:text-xs opacity-70 whitespace-nowrap hidden sm:block truncate">Shared computing · Global clusters</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {/* My Groups / All Groups toggle */}
-                        <div className="flex bg-white/5 border border-white/10 rounded-full p-1">
+
+                    {/* Right controls */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <button
+                            onClick={() => refreshComputeGroups()}
+                            className="p-2 rounded-full border border-white/10 text-white/50 hover:bg-white/5 transition hover:text-white shrink-0"
+                            title="Refresh"
+                        >
+                            <RefreshCw size={14} />
+                        </button>
+
+                        {/* Filter toggle pill */}
+                        <div className="flex bg-white/5 p-0.5 rounded-full border border-white/10">
                             <button
                                 onClick={() => setGroupFilter('all')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${groupFilter === 'all' ? 'bg-white text-slate-900' : 'text-white/50 hover:text-white'
-                                    }`}
+                                className={`px-4 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                                    groupFilter === 'all'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-white/50 hover:text-white'
+                                }`}
                             >
                                 All Groups
                             </button>
                             <button
                                 onClick={() => setGroupFilter('mine')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${groupFilter === 'mine' ? 'bg-white text-slate-900' : 'text-white/50 hover:text-white'
-                                    }`}
+                                className={`px-4 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                                    groupFilter === 'mine'
+                                        ? 'bg-white text-slate-900 shadow-sm'
+                                        : 'text-white/50 hover:text-white'
+                                }`}
                             >
                                 My Groups
                             </button>
                         </div>
+
                         <button
-                            onClick={() => refreshComputeGroups()}
-                            className="p-2 rounded-full border border-white/10 text-white/50 hover:bg-white/5 transition hover:text-white"
-                            title="Refresh"
+                            onClick={() => navigate('/profile')}
+                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors shrink-0"
                         >
-                            <RefreshCw size={18} />
+                            <User size={15} />
                         </button>
                     </div>
                 </div>
+            </div>
 
-
-
+            <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 space-y-8">
                 <div className="grid gap-4">
                     {(() => {
                         const filteredGroups = computeGroups.filter(g =>
@@ -573,7 +638,6 @@ export default function ComputeRoute() {
                                                         <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div> Active
                                                         </span>
-
                                                     </div>
                                                     <p className="text-sm text-white/70 mt-1 flex items-center gap-1.5">
                                                         <Users size={13} className="opacity-60" />
@@ -587,7 +651,7 @@ export default function ComputeRoute() {
                                                     {isOwner ? (
                                                         <div className="flex items-center gap-2">
                                                             <button
-                                                                onClick={() => handleDeleteGroup(group.id)}
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id) }}
                                                                 disabled={deletingId === group.id}
                                                                 className="p-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
                                                                 title="Delete group"
@@ -622,8 +686,8 @@ export default function ComputeRoute() {
             </div>
 
             {/* Floating Action Button */}
-            <button
-                onClick={() => {
+            <ComputeFloatingActions 
+                onAdd={() => {
                     setShowWizard(true)
                     setWizardStep(1)
                     setError(null)
@@ -633,13 +697,11 @@ export default function ComputeRoute() {
                     setWorkerSize('')
                     setEpoch('')
                     setBatchSize('')
-                }}
-                className="fixed bottom-6 right-6 h-16 w-16 rounded-full bg-white text-slate-900 flex items-center justify-center shadow-xl z-10"
-            >
-                <Plus size={22} />
-            </button>
+                }} 
+            />
 
             <FloatingBottomNav />
+
 
             {/* PIN Verification Modal */}
             <AnimatePresence>

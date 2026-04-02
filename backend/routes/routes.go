@@ -100,5 +100,12 @@ func SetupRoutes(r *gin.Engine) {
 			favorites.POST("/:id", handlers.CreateFavorite)
 			favorites.DELETE("/:id", handlers.DeleteFavorite)
 		}
+
+		// Transactions routes
+		transactions := api.Group("/transactions")
+		{
+			transactions.POST("", middleware.AuthMiddleware(), handlers.CreateTransaction)
+			transactions.PUT("/:id/complete", middleware.AuthMiddleware(), handlers.CompleteTransaction)
+		}
 	}
 }
