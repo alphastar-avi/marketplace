@@ -55,18 +55,17 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
     }
   }
 
-  const getOtherParticipantName = (chat: any) => {
-    if (chat.name) return chat.name
-
-    const otherParticipant = chat.participants.find((p: any) => {
-      // Handle both string IDs and User objects
+  const getOtherParticipant = (chat: any) => {
+    return chat.participants.find((p: any) => {
       const participantId = typeof p === 'string' ? p : p.id
       return participantId !== user?.id
     })
+  }
 
+  const getOtherParticipantName = (chat: any) => {
+    if (chat.name) return chat.name
+    const otherParticipant = getOtherParticipant(chat)
     if (!otherParticipant) return 'Unknown User'
-
-    // Return name if it's a User object, otherwise return the ID
     return typeof otherParticipant === 'string' ? otherParticipant : otherParticipant.name || 'Unknown User'
   }
 
@@ -106,7 +105,7 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-indigo-500/50 transition-colors"
+            className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-[#7890ff]/50 transition-colors"
           />
         </div>
       </div>
@@ -136,16 +135,20 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onSelectChat(chat.id)}
                   className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${isSelected
-                    ? 'bg-indigo-500/20 border border-indigo-500/30'
+                    ? 'bg-[#7890ff]/20 border border-[#7890ff]/30'
                     : 'hover:bg-white/5 border border-transparent'
                     }`}
                 >
                   <div className="flex items-start gap-3">
                     {/* Avatar */}
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-semibold text-sm">
-                        {getInitials(otherParticipant)}
-                      </span>
+                    <div className="w-12 h-12 rounded-full bg-[#7890ff] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {typeof getOtherParticipant(chat) !== 'string' && (getOtherParticipant(chat) as any)?.avatar ? (
+                        <img src={(getOtherParticipant(chat) as any).avatar} alt={otherParticipant} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-white font-semibold text-sm">
+                          {getInitials(otherParticipant)}
+                        </span>
+                      )}
                     </div>
 
                     {/* Chat Info */}

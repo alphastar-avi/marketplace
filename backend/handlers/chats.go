@@ -24,6 +24,7 @@ func GetChats(c *gin.Context) {
 	result := config.DB.Joins("JOIN chat_participants ON chat_participants.chat_id = chats.id").
 		Where("chat_participants.user_id = ?", userID).
 		Preload("Product").
+		Preload("Product.Seller").
 		Preload("CarpoolRide").
 		Preload("Participants").
 		Preload("Messages.From").
@@ -47,7 +48,7 @@ func GetChat(c *gin.Context) {
 	}
 
 	var chat models.Chat
-	result := config.DB.Preload("Product").Preload("CarpoolRide").Preload("Participants").Preload("Messages.From").First(&chat, chatID)
+	result := config.DB.Preload("Product").Preload("Product.Seller").Preload("CarpoolRide").Preload("Participants").Preload("Messages.From").First(&chat, chatID)
 	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Chat not found"})
 		return

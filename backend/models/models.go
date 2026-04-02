@@ -25,6 +25,7 @@ type User struct {
 	Avatar     string    `json:"avatar"`
 	Year       string    `json:"year"`
 	Department string    `json:"department"`
+	UPIID      string    `json:"upi_id"`
 	IsAdmin    bool      `json:"is_admin" gorm:"default:false"`
 	CollegeID  uuid.UUID `json:"college_id" gorm:"type:uuid;not null"`
 	College    College   `json:"college" gorm:"foreignKey:CollegeID"`
@@ -105,6 +106,23 @@ type Favorite struct {
 	ProductID uuid.UUID `json:"product_id" gorm:"type:uuid;not null"`
 	Product   Product   `json:"product" gorm:"foreignKey:ProductID"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+// Transaction represents a payment/transaction for a product
+type Transaction struct {
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	ProductID uuid.UUID `json:"product_id" gorm:"type:uuid;not null"`
+	Product   Product   `json:"product" gorm:"foreignKey:ProductID"`
+	BuyerID   uuid.UUID `json:"buyer_id" gorm:"type:uuid;not null"`
+	Buyer     User      `json:"buyer" gorm:"foreignKey:BuyerID"`
+	SellerID  uuid.UUID `json:"seller_id" gorm:"type:uuid;not null"`
+	Seller    User      `json:"seller" gorm:"foreignKey:SellerID"`
+	Amount    float64   `json:"amount" gorm:"not null"`
+	Status    string    `json:"status" gorm:"default:'pending'"` // pending, successful, failed
+	CollegeID uuid.UUID `json:"college_id" gorm:"type:uuid;not null"`
+	College   College   `json:"college" gorm:"foreignKey:CollegeID"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // CarpoolRide represents a ride offer created by a user
@@ -207,6 +225,13 @@ func (pr *PurchaseRequest) BeforeCreate(tx *gorm.DB) error {
 func (f *Favorite) BeforeCreate(tx *gorm.DB) error {
 	if f.ID == uuid.Nil {
 		f.ID = uuid.New()
+	}
+	return nil
+}
+
+func (t *Transaction) BeforeCreate(tx *gorm.DB) error {
+	if t.ID == uuid.Nil {
+		t.ID = uuid.New()
 	}
 	return nil
 }
