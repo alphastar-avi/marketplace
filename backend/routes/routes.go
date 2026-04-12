@@ -104,8 +104,11 @@ func SetupRoutes(r *gin.Engine) {
 		// Transactions routes
 		transactions := api.Group("/transactions")
 		{
+			transactions.GET("/:id", handlers.GetTransaction)
 			transactions.POST("", middleware.AuthMiddleware(), handlers.CreateTransaction)
+			transactions.PUT("/:id/pending", middleware.AuthMiddleware(), handlers.MarkTransactionPending)
 			transactions.PUT("/:id/complete", middleware.AuthMiddleware(), handlers.CompleteTransaction)
+			transactions.PUT("/:id/fail", middleware.AuthMiddleware(), handlers.FailTransaction)
 		}
 	}
 }

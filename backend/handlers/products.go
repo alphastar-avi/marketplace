@@ -102,6 +102,14 @@ func CreateProduct(c *gin.Context) {
 
 	// Parse price
 	priceStr := c.PostForm("price")
+
+	// --- AI Content Moderation Check ---
+	moderationText := fmt.Sprintf("%s %s", req.Title, req.Description)
+	if err := ModerateText(moderationText); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// -----------------------------------
 	price := 0.0
 	if priceStr != "" {
 		_, err := fmt.Sscanf(priceStr, "%f", &price)
@@ -143,12 +151,31 @@ func CreateProduct(c *gin.Context) {
 		}
 
 		// Upload each file
-		for _, file := range files {
-			log.Printf("📥 Received image for upload: %s (%d bytes)", file.Filename, file.Size)
-			fileURL, err := blobStorage.UploadFile(file, "products")
+		for _, fileHeader := range files {
+			log.Printf("📥 Received image for upload: %s (%d bytes)", fileHeader.Filename, fileHeader.Size)
+
+			// --- AI Image Moderation Check ---
+			file, err := fileHeader.Open()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image for moderation"})
+				return
+			}
+			imageBytes := make([]byte, fileHeader.Size)
+			_, err = file.Read(imageBytes)
+			file.Close() // Close immediately after reading
+
+			if err == nil {
+				if modErr := ModerateImage(imageBytes); modErr != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": modErr.Error()})
+					return
+				}
+			}
+			// ---------------------------------
+
+			fileURL, err := blobStorage.UploadFile(fileHeader, "products")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": fmt.Sprintf("Failed to upload file %s: %v", file.Filename, err),
+					"error": fmt.Sprintf("Failed to upload file %s: %v", fileHeader.Filename, err),
 				})
 				return
 			}
