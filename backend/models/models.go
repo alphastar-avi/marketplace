@@ -67,6 +67,7 @@ type Chat struct {
 	Messages      []Message    `json:"messages" gorm:"foreignKey:ChatID"`
 	CollegeID     uuid.UUID    `json:"college_id" gorm:"type:uuid;not null"`
 	College       College      `json:"college" gorm:"foreignKey:CollegeID"`
+	Paid          bool         `json:"paid" gorm:"default:false"`
 	CreatedAt     time.Time    `json:"created_at"`
 	UpdatedAt     time.Time    `json:"updated_at"`
 }

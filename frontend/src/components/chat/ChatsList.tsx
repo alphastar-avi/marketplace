@@ -79,12 +79,12 @@ export default function ChatsList({ selectedChatId, onSelectChat }: ChatsListPro
   }
 
   const getLastMessage = (chat: any) => {
-    const lastMessage = chat.messages[chat.messages.length - 1]
-    if (!lastMessage) return 'No messages yet'
+    const lastValidMessage = [...chat.messages].reverse().find(m => !m.text.startsWith("⚙️ PAYMENT_REQUESTED|"))
+    if (!lastValidMessage) return 'No messages yet'
 
-    const isFromUser = lastMessage.from === user?.id
+    const isFromUser = lastValidMessage.from === user?.id
     const prefix = isFromUser ? 'You: ' : ''
-    return prefix + lastMessage.text
+    return prefix + lastValidMessage.text
   }
 
   const getInitials = (name: string) => {
