@@ -62,6 +62,7 @@ export type Chat = {
   }
   participants: string[]
   messages: Message[]
+  paid?: boolean
 }
 
 export type PurchaseRequest = {

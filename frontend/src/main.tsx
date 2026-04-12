@@ -13,6 +13,7 @@ import ComputeRoute from './routes/Compute'
 import AuthCallback from './routes/AuthCallback'
 import Login from './routes/Login'
 import Signup from './routes/Signup'
+import PaymentPage from './pages/PaymentPage'
 
 import { MarketplaceProvider } from './state/MarketplaceContext'
 import { ThemeProvider } from './state/ThemeContext'
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
   { path: '/carpool', element: <CarpoolRoute /> },
   { path: '/compute', element: <ComputeRoute /> },
   { path: '/auth/callback', element: <AuthCallback /> },
+  { path: '/payment', element: <PaymentPage /> },
 ])
 
 createRoot(document.getElementById('root')!).render(

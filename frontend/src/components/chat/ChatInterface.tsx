@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Send, Check, X as XIcon, Users, QrCode, CheckCircle } from 'lucide-react'
 import { useMarketplace } from '../../state/MarketplaceContext'
@@ -12,12 +13,14 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ chatId, onClose, isMobile = false }: ChatInterfaceProps) {
+  const navigate = useNavigate()
   const { chats, products, user, pushMessage, purchaseRequests, updatePurchaseRequest, refreshChat } = useMarketplace()
   const chat = chats.find((c) => c.id === chatId)
   const [text, setText] = useState('')
   const [showParticipants, setShowParticipants] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState('')
+  const [txnStatus, setTxnStatus] = useState<string>('initiated')
   const [nowTime, setNowTime] = useState(Date.now())
   const messagesRef = useRef<HTMLDivElement | null>(null)
 
@@ -99,6 +102,34 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
   const timeLeftMs = Math.max(0, WINDOW_MS - (nowTime - reqTime))
   const timeLeftStr = `${Math.floor(timeLeftMs / 60000)}:${Math.floor((timeLeftMs % 60000) / 1000).toString().padStart(2, '0')}`
 
+  const hasMarkedFailed = useRef<Set<string>>(new Set());
+
+  // Logic to poll for transaction status to flip "Pay Now" to "Resume Payment"
+  useEffect(() => {
+    if (isBuyer && reqTxnId && !isGloballyPaid && isPaymentWindowActive) {
+      const pollStatus = () => {
+        api.get(`/transactions/${reqTxnId}`).then(res => {
+          setTxnStatus(res.data.status)
+        }).catch(() => {})
+      }
+      pollStatus()
+      const interval = setInterval(pollStatus, 2500)
+      return () => clearInterval(interval)
+    }
+  }, [isBuyer, reqTxnId, isGloballyPaid, isPaymentWindowActive])
+
+  // Logic to mark as failed if window expires
+  useEffect(() => {
+    if (reqTime > compTime && !isGloballyPaid && nowTime - reqTime >= WINDOW_MS && reqTxnId) {
+       if (hasMarkedFailed.current.has(reqTxnId)) return;
+       hasMarkedFailed.current.add(reqTxnId);
+       
+       // Just fire and forget or handle error quietly. 
+       // This marks it failed in the backend if the window closed while user was watching.
+       api.put(`/transactions/${reqTxnId}/fail`).catch(() => {});
+    }
+  }, [nowTime, reqTime, compTime, isGloballyPaid, WINDOW_MS, reqTxnId])
+
   const send = () => {
     if (!text.trim()) return
     pushMessage(chat.id, user?.id || 'guest', text.trim())
@@ -112,8 +143,9 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
   const handleSendPaymentRequest = async () => {
     try {
       const res = await api.post('/transactions', {
-        product_id: product?.id,
+        product_id: chatProductId,
         buyer_id: otherParticipantId,
+        chat_id: chat.id,
         amount: parseFloat(paymentAmount)
       })
       
@@ -172,7 +204,11 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
         </div>
 
         {isSeller && product?.status !== 'sold' && (
-          !isPaymentWindowActive ? (
+          chat.paid ? (
+            <div className="py-1.5 px-3 bg-green-500/10 border border-green-500/20 rounded-lg text-[10px] font-bold text-green-400 uppercase tracking-widest">
+              Payment Made
+            </div>
+          ) : !isPaymentWindowActive ? (
             <button 
               onClick={() => setShowPaymentModal(true)}
               className="py-1.5 px-3 bg-[#7890ff] hover:opacity-90 rounded-lg text-[11px] font-bold text-white shadow-sm transition-colors uppercase tracking-wider"
@@ -299,18 +335,15 @@ export default function ChatInterface({ chatId, onClose, isMobile = false }: Cha
                 <div className="text-sm font-semibold text-indigo-300 flex items-center justify-center gap-2"><QrCode size={16}/> Seller requested Payment of Rs. {reqAmount}</div>
                 <div className="text-xs opacity-80 text-rose-300 font-mono">Expires in {timeLeftStr}</div>
               </div>
-              <div className="bg-white p-3 rounded-xl mb-4 shadow-xl relative">
-                <QRCode value={`upi://pay?pa=${sellerUpiId || 'demo@upi'}&pn=${encodeURIComponent(otherParticipantName)}&am=${reqAmount}`} size={160} />
-              </div>
-              <div className="w-full max-w-[160px]">
-                <a href={`upi://pay?pa=${sellerUpiId || 'demo@upi'}&pn=${encodeURIComponent(otherParticipantName)}&am=${reqAmount}`} className="w-full py-2.5 px-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl text-xs font-semibold text-white flex items-center justify-center transition-colors">
-                   Tap to open UPI App
-                </a>
-              </div>
-              <p className="text-xs text-center text-white/50 mt-4">
-                Or scan via any UPI app manually:
-                <span className="font-semibold text-white/80 tracking-wide block mt-1">{sellerUpiId || 'demo@upi'}</span>
-              </p>
+              <button 
+                onClick={() => {
+                  if (reqTxnId) localStorage.setItem('active_txn_id', reqTxnId)
+                  window.open('/payment', '_blank')
+                }}
+                className="w-full py-3 px-4 bg-[#7890ff] hover:opacity-90 rounded-xl font-semibold text-white transition-colors shadow-lg shadow-indigo-500/20 block text-center"
+              >
+                {txnStatus === 'pending' ? 'Resume Payment' : 'Pay Now'}
+              </button>
             </div>
           </div>
         )}
